@@ -14,11 +14,16 @@ export type Movement = {
 
 export type GoalContributionLike = { amountCents: number; date: string; status: "planned" | "done" };
 export type GoalLike = { targetCents: number; deadline: string | null; contributions: GoalContributionLike[] };
-export type BudgetLike = { category: string; limitCents: number };
+export type BudgetLike = { category: string; limitCents: number; alertAt?: number | null };
 
 export type DisplayStatus = "paid" | "received" | "overdue" | "due_today" | "scheduled";
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
+
+/** Efeito no saldo: entrada soma, gasto subtrai, movimentação interna não altera. */
+export function signedAmount(movement: Pick<Movement, "kind" | "amountCents">) {
+  return movement.kind === "income" ? movement.amountCents : movement.kind === "expense" ? -movement.amountCents : 0;
+}
 
 export function shiftMonth(month: string, offset: number) {
   const [year, monthNumber] = month.split("-").map(Number);
@@ -64,7 +69,7 @@ export function currentBalance(reportedBalanceCents: number | null, reportedOn: 
   if (!reportedOn) return reportedBalanceCents;
   return movements
     .filter((movement) => movement.status === "paid" && movement.paidOn !== null && movement.paidOn >= reportedOn)
-    .reduce((total, movement) => total + (movement.kind === "income" ? movement.amountCents : -movement.amountCents), reportedBalanceCents);
+    .reduce((total, movement) => total + signedAmount(movement), reportedBalanceCents);
 }
 
 export function savedInGoals(goals: GoalLike[]) {
@@ -132,14 +137,24 @@ export function endOfMonthProjection(balanceCents: number | null, monthlyIncomeC
     const end = lastDayOfMonth(month);
     return movements
       .filter((movement) => movement.status !== "paid" && movement.date <= end)
-      .reduce((total, movement) => total + (movement.kind === "income" ? movement.amountCents : -movement.amountCents), balanceCents);
+      .reduce((total, movement) => total + signedAmount(movement), balanceCents);
   }
   const summary = summarizeMonth(movements, month);
   const income = summary.incomeCents || monthlyIncomeCents;
   return income ? income - summary.expenseCents : null;
 }
 
-export type BudgetLevel = "ok" | "warning" | "over";
+/** Estados do orçamento: normal, próximo do limite, limite atingido e ultrapassado. */
+export type BudgetLevel = "ok" | "warning" | "reached" | "over";
+
+export const defaultBudgetAlertAt = 80;
+
+export function budgetLevel(spentCents: number, limitCents: number, alertAt: number | null | undefined = defaultBudgetAlertAt): BudgetLevel {
+  if (spentCents > limitCents) return "over";
+  if (spentCents === limitCents) return "reached";
+  const threshold = (alertAt ?? defaultBudgetAlertAt) / 100;
+  return limitCents > 0 && spentCents / limitCents >= threshold ? "warning" : "ok";
+}
 
 export function budgetUsage(budgets: BudgetLike[], movements: Movement[], month: string) {
   return budgets.map((budget) => {
@@ -147,8 +162,8 @@ export function budgetUsage(budgets: BudgetLike[], movements: Movement[], month:
       .filter((movement) => movement.kind === "expense" && movement.category === budget.category && inMonth(movement.date, month))
       .map((movement) => movement.amountCents));
     const ratio = budget.limitCents > 0 ? spentCents / budget.limitCents : 0;
-    const level: BudgetLevel = ratio > 1 ? "over" : ratio >= 0.8 ? "warning" : "ok";
-    return { ...budget, spentCents, remainingCents: budget.limitCents - spentCents, ratio, level };
+    const level = budgetLevel(spentCents, budget.limitCents, budget.alertAt);
+    return { ...budget, alertAt: budget.alertAt === undefined ? defaultBudgetAlertAt : budget.alertAt, spentCents, remainingCents: budget.limitCents - spentCents, ratio, level };
   }).sort((left, right) => right.ratio - left.ratio);
 }
 

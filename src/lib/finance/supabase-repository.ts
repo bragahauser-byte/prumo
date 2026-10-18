@@ -58,7 +58,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         client.from("profiles").select("display_name, monthly_income, reported_balance, balance_reported_on, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed, avatar_data, notification_settings").eq("user_id", ownerId).maybeSingle(),
         client.from("expenses").select("id, kind, description, amount, category, due_date, status, paid_on, notes, recurring_rule_id, occurrence_date").order("due_date", { ascending: true }),
         client.from("recurring_rules").select("id, kind, name, amount, category, frequency, interval_count, starts_on, due_day, ends_on, is_active, is_variable, notes").order("created_at", { ascending: false }),
-        client.from("budgets").select("category, limit_amount").order("category"),
+        client.from("budgets").select("category, limit_amount, alert_at").order("category"),
         client.from("savings_goals").select("id, name, icon, target_amount, deadline, created_on").order("created_at"),
         client.from("goal_contributions").select("id, goal_id, amount, contributed_on, status").order("contributed_on"),
       ]);
@@ -119,6 +119,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         budgets: (budgetResult.data ?? []).map((budget): FinanceBudget => ({
           category: budget.category,
           limitCents: amountToCents(budget.limit_amount),
+          alertAt: budget.alert_at ?? null,
         })),
         savingsGoals: (goalResult.data ?? []).map((goal): FinanceSavingsGoal => ({
           id: goal.id,
@@ -230,6 +231,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         user_id: ownerId,
         category: budget.category,
         limit_amount: formatCentsAsDecimal(budget.limitCents),
+        alert_at: budget.alertAt,
       });
       throwOnError(error);
     },

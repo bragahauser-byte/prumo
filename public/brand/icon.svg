@@ -1,0 +1,6 @@
+<svg width="244" height="244" viewBox="0 0 244 244" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>.bg{fill:#FFFFFF}.fg{stroke:#163300}@media (prefers-color-scheme: dark){.bg{fill:#0F0F0F}.fg{stroke:#9FE870}}</style>
+<rect class="bg" width="244" height="244" rx="24"/>
+<path class="fg" d="M179.6 122C179.6 153.812 153.812 179.6 122 179.6C90.1883 179.6 64.3999 153.812 64.3999 122C64.3999 90.1884 90.1883 64.4 122 64.4C153.812 64.4 179.6 90.1884 179.6 122Z" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path class="fg" d="M146.422 97.5776L134.211 134.211L97.5776 146.422L109.789 109.789L146.422 97.5776Z" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

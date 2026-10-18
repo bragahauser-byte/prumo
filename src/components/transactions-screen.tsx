@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
 import { TransactionRow } from "@/components/transaction-row";
 import { Sheet } from "@/components/ui/sheet";
 import { Card, Segmented, fieldClass, focusRing, labelClass, primaryButton, softButton } from "@/components/ui/primitives";
-import { expenseCategories, incomeCategories, type TransactionKind } from "@/domain/categories";
+import { expenseCategories, incomeCategories, transferCategories, type TransactionKind } from "@/domain/categories";
 import { displayStatus, type DisplayStatus } from "@/domain/planning";
 import { todayISO } from "@/lib/dates";
 import { formatCurrency, formatWeekdayDate } from "@/lib/formatting";
@@ -22,11 +23,12 @@ export function TransactionsScreen() {
   const today = todayISO();
   const [kind, setKind] = useState<KindFilter>("all");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const params = useSearchParams();
+  const [category, setCategory] = useState(params.get("category") ?? "");
   const [status, setStatus] = useState<DisplayStatus | "">("");
   const [nature, setNature] = useState<NatureFilter>("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [from, setFrom] = useState(params.get("from") ?? "");
+  const [to, setTo] = useState(params.get("to") ?? "");
   const [showFilters, setShowFilters] = useState(false);
   const [visible, setVisible] = useState(pageSize);
 
@@ -50,8 +52,9 @@ export function TransactionsScreen() {
   }, [filtered, visible]);
 
   const totals = filtered.reduce((acc, item) => {
+    // Movimentações internas não entram nos totais de entradas e saídas.
     if (item.kind === "income") acc.income += item.amountCents;
-    else acc.expense += item.amountCents;
+    else if (item.kind === "expense") acc.expense += item.amountCents;
     return acc;
   }, { income: 0, expense: 0 });
   const activeFilters = [category, status, nature, from, to].filter(Boolean).length;
@@ -96,8 +99,8 @@ export function TransactionsScreen() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Entradas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-success)]">{formatCurrency(totals.income, currency)}</span></div>
-        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Saídas</span><span className="tabular mt-0.5 block text-xl font-semibold">{formatCurrency(totals.expense, currency)}</span></div>
+        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Entradas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-income)]">{formatCurrency(totals.income, currency)}</span></div>
+        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Saídas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-expense)]">{formatCurrency(totals.expense, currency)}</span></div>
       </div>
 
       {groups.length ? (
@@ -139,6 +142,7 @@ export function TransactionsScreen() {
                 <option value="">Todas</option>
                 {kind !== "income" ? <optgroup label="Saídas">{expenseCategories.map((item) => <option key={item}>{item}</option>)}</optgroup> : null}
                 {kind !== "expense" ? <optgroup label="Entradas">{incomeCategories.map((item) => <option key={item}>{item}</option>)}</optgroup> : null}
+                {kind === "all" ? <optgroup label="Movimentações internas">{transferCategories.map((item) => <option key={item}>{item}</option>)}</optgroup> : null}
               </select>
             </label>
             <label className={labelClass}>Status

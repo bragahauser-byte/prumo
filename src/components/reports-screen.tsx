@@ -8,13 +8,13 @@ import { useFinanceSummary } from "@/components/use-finance-summary";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ColumnChart } from "@/components/ui/column-chart";
 import { Illustration } from "@/components/ui/illustration";
-import { Card, SectionHeader, focusRing, primaryButton } from "@/components/ui/primitives";
+import { Card, SectionHeader, focusRing, primaryButton, textButton } from "@/components/ui/primitives";
 import { expensesByCategory, fixedVariableSplit, monthlySeries, percentChange, shiftMonth, unusualIncreases } from "@/domain/planning";
 import { currentMonth } from "@/lib/dates";
 import { formatCurrency, formatMonthKey } from "@/lib/formatting";
 
 const incomeColor = "#9FE870";
-const expenseColor = "#163300";
+const expenseColor = "#C7271A";
 
 function compactCurrency(cents: number, currency: string) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(cents / 100);
@@ -77,8 +77,8 @@ export function ReportsScreen() {
           <p className={`tabular mt-2 text-2xl font-semibold ${net < 0 ? "text-[var(--color-error)]" : ""}`}>{net >= 0 ? "+" : "−"}{formatCurrency(Math.abs(net), currency)}</p>
           <div className="mt-1 flex items-center gap-2"><Change value={percentChange(net, previousNet)} higherIsGood /><span className="text-xs text-[var(--color-muted)]">vs. {formatMonthKey(previousMonth).split(" ")[0]}</span></div>
           <dl className="mt-4 space-y-1 text-sm">
-            <div className="flex justify-between"><dt className="text-[var(--color-muted)]">Receitas</dt><dd className="tabular font-medium">{formatCurrency(summary.incomeCents, currency)}</dd></div>
-            <div className="flex justify-between"><dt className="text-[var(--color-muted)]">Despesas</dt><dd className="tabular font-medium">{formatCurrency(summary.expenseCents, currency)}</dd></div>
+            <div className="flex justify-between"><dt className="text-[var(--color-muted)]">Receitas</dt><dd className="tabular font-medium text-[var(--color-income)]">{formatCurrency(summary.incomeCents, currency)}</dd></div>
+            <div className="flex justify-between"><dt className="text-[var(--color-muted)]">Despesas</dt><dd className="tabular font-medium text-[var(--color-expense)]">{formatCurrency(summary.expenseCents, currency)}</dd></div>
           </dl>
         </Card>
         <Card>
@@ -121,7 +121,7 @@ export function ReportsScreen() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card aria-labelledby="categories-title">
-          <SectionHeader id="categories-title" title="Onde o dinheiro mais vai" />
+          <SectionHeader id="categories-title" title="Onde o dinheiro mais vai" action={<Link href={`/reports/categories?month=${month}`} className={textButton}>Análise completa</Link>} />
           {categories.length ? (
             <ul className="space-y-4">
               {categories.map((item) => {

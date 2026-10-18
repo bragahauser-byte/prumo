@@ -82,6 +82,8 @@ export type FinanceRecurringRule = {
 export type FinanceBudget = {
   category: string;
   limitCents: number;
+  /** Percentual do limite em que o alerta "perto do limite" dispara; null desliga os alertas desta categoria. */
+  alertAt: number | null;
 };
 
 export type FinanceGoalContribution = {
@@ -155,7 +157,7 @@ const preferencesSchema = z.object({
   notificationSettings: notificationSettingsSchema.default(defaultNotificationSettings),
 });
 
-const kindSchema = z.enum(["expense", "income"]);
+const kindSchema = z.enum(["expense", "income", "transfer"]);
 
 const expenseSchema = z.object({
   id: z.string().min(1),
@@ -190,6 +192,7 @@ const recurringRuleSchema = z.object({
 const budgetSchema = z.object({
   category: z.string().min(1).max(80),
   limitCents: z.number().int().positive(),
+  alertAt: z.number().int().min(1).max(100).nullable().default(80),
 });
 
 const savingsGoalSchema = z.object({

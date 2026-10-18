@@ -39,6 +39,7 @@ export function TransactionDetail() {
 
   const rule = transaction.recurringRuleId ? recurringRules.find((item) => item.id === transaction.recurringRuleId) : undefined;
   const isIncome = transaction.kind === "income";
+  const isTransfer = transaction.kind === "transfer";
   const status = displayStatus(transaction, today);
 
   async function toggleSettled() {
@@ -78,13 +79,13 @@ export function TransactionDetail() {
           <Card className="flex flex-col items-center text-center">
             <CategoryIcon category={transaction.category} kind={transaction.kind} size={64} />
             <h2 className="mt-4 text-xl font-semibold">{transaction.description}</h2>
-            <p className={`tabular mt-2 text-4xl font-semibold ${isIncome ? "text-[var(--color-success)]" : ""}`}>{isIncome ? "+" : "−"}{formatCurrency(transaction.amountCents, currency)}</p>
+            <p className={`tabular mt-2 text-4xl font-semibold ${isIncome ? "text-[var(--color-income)]" : isTransfer ? "" : "text-[var(--color-expense)]"}`}>{isIncome ? "+" : isTransfer ? "" : "−"}{formatCurrency(transaction.amountCents, currency)}</p>
             <div className="mt-3"><StatusChip status={status} /></div>
           </Card>
 
           <Card>
             <dl className="divide-y divide-[var(--color-border)] text-base">
-              <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">Tipo</dt><dd className="font-medium">{isIncome ? "Receita" : "Despesa"} · {rule ? "fixa" : "variável"}</dd></div>
+              <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">Tipo</dt><dd className="font-medium">{isIncome ? "Receita" : isTransfer ? "Movimentação interna" : "Despesa"} · {isTransfer ? "não conta como gasto" : rule ? "fixa" : "variável"}</dd></div>
               <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">Categoria</dt><dd className="font-medium">{transaction.category}</dd></div>
               <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">{isIncome ? "Previsão" : "Vencimento"}</dt><dd className="font-medium">{formatCalendarDate(transaction.date)}</dd></div>
               {transaction.paidOn ? <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">{isIncome ? "Recebido em" : "Pago em"}</dt><dd className="font-medium">{formatCalendarDate(transaction.paidOn)}</dd></div> : null}
@@ -155,7 +156,7 @@ function TransactionEditForm({ transaction, currency, onDone }: { transaction: F
     <Card>
       <form onSubmit={(event) => void submit(event)} className="space-y-5">
         <h2 className="text-xl font-semibold">Editar transação</h2>
-        <Segmented className="flex w-full" label="Tipo" value={kind} onChange={(value) => { setKind(value); if (!categoriesFor(value).includes(category)) setCategory(""); }} options={[{ value: "expense", label: "Despesa" }, { value: "income", label: "Receita" }]} />
+        <Segmented className="flex w-full" label="Tipo" value={kind} onChange={(value) => { setKind(value); if (!categoriesFor(value).includes(category)) setCategory(""); }} options={[{ value: "expense", label: "Despesa" }, { value: "income", label: "Receita" }, { value: "transfer", label: "Interna" }]} />
         <label className={labelClass}>Descrição<input value={description} onChange={(event) => setDescription(event.target.value)} maxLength={120} className={fieldClass} /></label>
         <div>
           <span className="text-sm font-medium">Valor</span>

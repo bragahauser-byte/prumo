@@ -58,6 +58,7 @@ export function TransactionRow({
   const today = todayISO();
   const status = displayStatus(transaction, today);
   const isIncome = transaction.kind === "income";
+  const isTransfer = transaction.kind === "transfer";
   const meta = [transaction.category, showDate ? formatShortDate(transaction.date) : null, transaction.recurringRuleId ? "Fixo" : null].filter(Boolean).join(" · ");
 
   return (
@@ -69,7 +70,7 @@ export function TransactionRow({
           <span className="mt-0.5 block truncate text-sm text-[var(--color-muted)]">{meta}</span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
-          <span className={`tabular text-base font-semibold ${isIncome ? "text-[var(--color-success)]" : ""}`}>{isIncome ? "+" : "−"}{formatCurrency(transaction.amountCents, currency)}</span>
+          <span className={`tabular text-base font-semibold ${isIncome ? "text-[var(--color-income)]" : isTransfer ? "text-[var(--color-muted)]" : "text-[var(--color-expense)]"}`}>{isIncome ? "+" : isTransfer ? "" : "−"}{formatCurrency(transaction.amountCents, currency)}</span>
           {status === "paid" || status === "received" ? null : <StatusChip status={status} />}
         </span>
       </Link>

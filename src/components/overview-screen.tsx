@@ -117,12 +117,12 @@ export function OverviewScreen() {
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-[var(--color-muted)]">Receitas</p>
-            <p className="tabular mt-1 text-2xl font-semibold text-[var(--color-success)]">{formatCurrency(summary.incomeCents, currency)}</p>
+            <p className="tabular mt-1 text-2xl font-semibold text-[var(--color-income)]">{formatCurrency(summary.incomeCents, currency)}</p>
             <Comparison current={summary.incomeCents} previous={previousSummary.incomeCents} previousLabel={previousLabel} higherIsGood />
           </div>
           <div>
             <p className="text-sm text-[var(--color-muted)]">Despesas</p>
-            <p className="tabular mt-1 text-2xl font-semibold">{formatCurrency(summary.expenseCents, currency)}</p>
+            <p className="tabular mt-1 text-2xl font-semibold text-[var(--color-expense)]">{formatCurrency(summary.expenseCents, currency)}</p>
             <Comparison current={summary.expenseCents} previous={previousSummary.expenseCents} previousLabel={previousLabel} higherIsGood={false} />
           </div>
         </div>

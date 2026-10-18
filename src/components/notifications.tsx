@@ -72,7 +72,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (!hasLoaded || !preferences?.notificationsEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
     const pushed = new Set(readList(pushedKey));
     const send = (item: AppNotification) => {
-      const notification = new Notification(item.title, { body: item.body, icon: asset("/app-icon.png"), tag: item.id });
+      const notification = new Notification(item.title, { body: item.body, icon: asset("/brand/logo-light-192.png"), tag: item.id });
       notification.onclick = () => { window.focus(); router.push(item.href); notification.close(); };
       pushed.add(item.id);
     };

@@ -134,9 +134,9 @@ describe("local finance repository", () => {
     expect(incomes.every((item) => item.kind === "income")).toBe(true);
     expect(incomes.map((item) => item.date).sort()).toEqual(["2028-01-05", "2028-03-05", "2028-05-05"]);
 
-    await repository.saveBudget({ category: "Lazer", limitCents: 30000 });
-    await repository.saveBudget({ category: "Lazer", limitCents: 40000 });
-    expect((await repository.load()).budgets).toEqual([{ category: "Lazer", limitCents: 40000 }]);
+    await repository.saveBudget({ category: "Lazer", limitCents: 30000, alertAt: 80 });
+    await repository.saveBudget({ category: "Lazer", limitCents: 40000, alertAt: 80 });
+    expect((await repository.load()).budgets).toEqual([{ category: "Lazer", limitCents: 40000, alertAt: 80 }]);
     await repository.deleteBudget("Lazer");
     expect((await repository.load()).budgets).toEqual([]);
 

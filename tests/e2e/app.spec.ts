@@ -7,7 +7,7 @@ const supabaseConfigured = Boolean(
 
 async function completeOnboarding(page: Page) {
   await page.goto("/onboarding");
-  await page.getByRole("button", { name: "Começar" }).click();
+  await page.getByRole("button", { name: "Criar meu perfil" }).click();
   await expect(page.getByRole("heading", { name: "Como podemos te chamar?" })).toBeVisible();
   await page.getByRole("button", { name: "Continuar" }).click();
   await page.getByRole("button", { name: "Continuar" }).click();
@@ -34,7 +34,7 @@ test("onboards a first-time user, saves preferences locally, and restores them a
   test.skip(supabaseConfigured, "This test verifies the local-storage mode.");
   await page.goto("/");
   await expect(page).toHaveURL(/\/onboarding$/);
-  await page.getByRole("button", { name: "Começar" }).click();
+  await page.getByRole("button", { name: "Criar meu perfil" }).click();
   await page.getByLabel("Nome").fill("Ana");
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByRole("heading", { name: "Boas-vindas ao Prumo" })).toBeVisible();
@@ -260,6 +260,65 @@ test("lists an important alert in the notification center when a bill is due tom
   await expect(page.getByRole("button", { name: "Notificações", exact: true })).toBeVisible();
 });
 
+async function registerExpense(page: Page, digits: string, description: string, category: RegExp) {
+  await page.goto("/add");
+  await typeOnKeypad(page, digits);
+  await page.getByRole("button", { name: "Gasto", exact: true }).click();
+  await page.getByPlaceholder("Categoria ou o que você comprou").fill(description);
+  await page.getByRole("button", { name: category }).first().click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+}
+
+test("consolidates spending by category, tracks the monthly budget and reports the excess without blocking", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/budgets");
+  await page.getByRole("button", { name: /Alimentação/ }).click();
+  await typeOnKeypad(page, "400");
+  await page.getByRole("button", { name: "Salvar limite" }).click();
+
+  for (const [digits, description] of [["100", "Restaurante japonês"], ["200", "Restaurante árabe"]]) {
+    await registerExpense(page, digits, description, /^Alimentação/);
+    await page.getByRole("button", { name: "Registrar gasto" }).click();
+    await page.getByRole("button", { name: "Concluir" }).click();
+  }
+  await registerExpense(page, "50", "Farmácia", /^Saúde/);
+  await page.getByRole("button", { name: "Registrar gasto" }).click();
+  await page.getByRole("button", { name: "Concluir" }).click();
+  await registerExpense(page, "300", "Fatura do cartão", /^Pagamento de fatura/);
+  await expect(page.getByText("não altera saldo nem orçamento")).toBeVisible();
+  await page.getByRole("button", { name: "Registrar movimentação" }).click();
+  await page.getByRole("button", { name: "Concluir" }).click();
+
+  await page.goto("/reports/categories");
+  const food = page.getByRole("button", { name: /^Alimentação: R\$ 300,00/ });
+  await expect(food).toBeVisible();
+  await expect(food).toContainText("75% de R$ 400,00 · restam R$ 100,00");
+  await expect(page.getByRole("button", { name: /^Saúde: R\$ 50,00/ })).toBeVisible();
+  await expect(page.getByText("R$ 350,00").first()).toBeVisible();
+  await food.click();
+  await expect(page.getByRole("dialog", { name: "Alimentação" }).getByText("2 lançamentos")).toBeVisible();
+  await page.getByRole("button", { name: "Fechar" }).click();
+
+  await registerExpense(page, "150", "Mercado", /^Alimentação/);
+  await expect(page.getByText(/Alimentação passa R\$\s50,00 do limite de R\$\s400,00/)).toBeVisible();
+  await page.getByRole("button", { name: "Registrar gasto" }).click();
+  await expect(page.getByText("Orçamento ultrapassado")).toBeVisible();
+  await page.getByRole("button", { name: "Concluir" }).click();
+
+  await page.goto("/reports/categories");
+  await expect(page.getByRole("button", { name: /^Alimentação: R\$ 450,00/ })).toContainText("excedente de R$ 50,00");
+  await page.goto("/budgets");
+  await expect(page.getByRole("listitem", { name: "Alimentação: Ultrapassado" })).toBeVisible();
+
+  await page.goto("/reports/categories");
+  await page.getByRole("button", { name: "Mês anterior" }).click();
+  await expect(page.getByRole("heading", { name: /Nenhum gasto em/ })).toBeVisible();
+  await page.reload();
+  await page.goto("/budgets");
+  await expect(page.getByRole("button", { name: /Alertas de Alimentação: em 80%/ })).toBeVisible();
+});
+
 test("sets a category budget from the keypad", async ({ page }) => {
   test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
   await completeOnboarding(page);
@@ -268,7 +327,7 @@ test("sets a category budget from the keypad", async ({ page }) => {
   await typeOnKeypad(page, "800");
   await page.getByRole("button", { name: "Salvar limite" }).click();
   await expect(page.getByText("Limite de Alimentação salvo: R$ 800,00 por mês.")).toBeVisible();
-  await expect(page.getByText("Restam R$ 800,00")).toBeVisible();
+  await expect(page.getByRole("listitem", { name: "Alimentação: Normal" })).toContainText("RestanteR$ 800,00");
 });
 
 test("creates and pauses a recurring bill while preserving generated occurrences", async ({ page }) => {

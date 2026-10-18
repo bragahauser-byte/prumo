@@ -11,8 +11,9 @@ import { CategoryIcon, GoalIcon } from "@/components/ui/category-icon";
 import { Confetti } from "@/components/ui/confetti";
 import { AmountDisplay, KeypadGrid, useKeypadInput } from "@/components/ui/money-keypad";
 import { focusRing, inkButton } from "@/components/ui/primitives";
-import { categoriesFor, suggestCategory, type TransactionKind } from "@/domain/categories";
-import { budgetUsage, goalProgress } from "@/domain/planning";
+import { categoriesFor, isTransferCategory, suggestCategory, suggestTransfer, transferCategories, type TransactionKind } from "@/domain/categories";
+import { budgetAfterExpense } from "@/domain/category-analysis";
+import { goalProgress } from "@/domain/planning";
 import { addDays, todayISO } from "@/lib/dates";
 import { createFinanceId, type FinanceRecurringRule } from "@/lib/finance/repository";
 import { currencySymbol, formatCalendarDate, formatCurrency, formatCurrencyCompact, formatShortDate } from "@/lib/formatting";
@@ -58,7 +59,7 @@ export function AddFlow() {
 
   const keypad = useKeypadInput({ currency, enabled: stage === "amount", onEscape: close });
   const goal = savingsGoals.find((item) => item.id === goalId) ?? null;
-  const kind: TransactionKind = action === "income" ? "income" : "expense";
+  const kind: TransactionKind = action === "income" ? "income" : category && isTransferCategory(category) ? "transfer" : "expense";
   const isPaid = settled && date <= today;
   const amountLabel = formatCurrencyCompact(amountCents, currency);
 
@@ -76,10 +77,14 @@ export function AddFlow() {
     return totals;
   }, [expenses, kind, today]);
 
-  const budget = action === "expense" && category ? budgets.find((item) => item.category === category) : undefined;
-  const budgetAfter = budget
-    ? budgetUsage([budget], [...expenses, { id: "preview", kind: "expense", amountCents, status: "pending", date, paidOn: null, category, recurringRuleId: null }], date.slice(0, 7))[0]
-    : null;
+  // O orçamento nunca impede o registro: o gasto é salvo e o excedente é informado.
+  const budget = kind === "expense" && category ? budgets.find((item) => item.category === category) : undefined;
+  const budgetAfter = budget ? { ...budgetAfterExpense(expenses, budget, date.slice(0, 7), amountCents), category: budget.category, limitCents: budget.limitCents, alertAt: budget.alertAt } : null;
+  const budgetNotice = !budgetAfter ? null
+    : budgetAfter.level === "over" ? { tone: "over" as const, text: `${budgetAfter.category} passa ${formatCurrency(budgetAfter.excessCents, currency)} do limite de ${formatCurrency(budgetAfter.limitCents, currency)} do mês.` }
+      : budgetAfter.level === "reached" ? { tone: "warning" as const, text: `${budgetAfter.category} atinge o limite de ${formatCurrency(budgetAfter.limitCents, currency)} do mês.` }
+        : budgetAfter.level === "warning" && budgetAfter.alertAt !== null ? { tone: "warning" as const, text: `${budgetAfter.category} fica em ${Math.floor((budgetAfter.spentCents / budgetAfter.limitCents) * 100)}% do limite. Restam ${formatCurrency(budgetAfter.remainingCents, currency)}.` }
+          : null;
 
   function choose(next: Action) {
     if (keypad.cents <= 0) { keypad.reject(); return; }
@@ -145,19 +150,20 @@ export function AddFlow() {
     return (
       <Receipt
         action={action}
+        kind={kind}
         amount={formatCurrencyCompact(amountCents, currency)}
         title={action === "goal" ? goal?.name ?? "Meta" : description.trim()}
         icon={action === "goal" ? <GoalIcon icon={goal?.icon ?? "other"} size={64} /> : <CategoryIcon category={category} kind={kind} size={64} />}
         when={`${date === today ? "Hoje" : formatShortDate(date)}${savedAt ? ` · ${savedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : ""}`}
         subtitle={action === "goal" ? (date > today ? `Aporte planejado para ${formatShortDate(date)}` : "Guardado na meta") : `Em ${category}`}
         details={[
-          { icon: <Check size={20} aria-hidden="true" />, title: action === "goal" ? (date > today ? "Planejado" : "Guardado") : "Registrado", text: action === "goal" ? "O dinheiro continua na sua conta; a meta foi atualizada." : action === "income" ? "Receita salva com sucesso" : "Gasto salvo com sucesso" },
+          { icon: <Check size={20} aria-hidden="true" />, title: action === "goal" ? (date > today ? "Planejado" : "Guardado") : "Registrado", text: action === "goal" ? "O dinheiro continua na sua conta; a meta foi atualizada." : action === "income" ? "Receita salva com sucesso" : kind === "transfer" ? "Movimentação interna: não conta como gasto nem muda o saldo" : "Gasto salvo com sucesso" },
           action === "goal" && goal
             ? { icon: <Tag size={20} aria-hidden="true" />, title: "Progresso", text: `${Math.round(goalProgress(goal, today).ratio * 100)}% · ${formatCurrency(goalProgress(goal, today).savedCents, currency)} de ${formatCurrency(goal.targetCents, currency)}` }
             : { icon: <Tag size={20} aria-hidden="true" />, title: "Categoria", text: `${category}${repeat !== "none" ? " · fixo" : " · variável"}` },
           { icon: <CalendarDays size={20} aria-hidden="true" />, title: "Data", text: `${formatCalendarDate(date)}${action === "goal" ? "" : ` · ${isPaid ? (kind === "income" ? "Recebido" : "Pago") : "Previsto"}`}` },
           repeat !== "none" && action !== "goal" ? { icon: <Repeat size={20} aria-hidden="true" />, title: "Repetição", text: `${repeatLabels[repeat]} · próximas ocorrências na Agenda` } : null,
-          budgetAfter && budgetAfter.level !== "ok" ? { icon: <AlertTriangle size={20} aria-hidden="true" />, title: "Orçamento", text: `${budgetAfter.category} chegou a ${Math.round(budgetAfter.ratio * 100)}% do limite do mês`, tone: budgetAfter.level } : null,
+          budgetNotice ? { icon: <AlertTriangle size={20} aria-hidden="true" />, title: budgetAfter?.level === "over" ? "Orçamento ultrapassado" : "Orçamento", text: budgetNotice.text, tone: budgetNotice.tone } : null,
         ]}
         onDone={close}
         onAgain={reset}
@@ -166,11 +172,13 @@ export function AddFlow() {
   }
 
   const sheetOpen = stage !== "amount";
-  const titleVerb = action === "goal" ? `Guardar ${amountLabel}` : action === "income" ? `Receita de ${amountLabel}` : `Gasto de ${amountLabel}`;
+  const titleVerb = action === "goal" ? `Guardar ${amountLabel}` : action === "income" ? `Receita de ${amountLabel}` : kind === "transfer" ? `Movimentação de ${amountLabel}` : `Gasto de ${amountLabel}`;
   const titlePrep = action === "income" ? "de" : "em";
   const query = search.trim().toLocaleLowerCase("pt-BR");
   const suggested = suggestCategory(search, kind);
-  const options = categoriesFor(kind).filter((item) => !query || item.toLocaleLowerCase("pt-BR").includes(query) || item === suggested);
+  const suggestedTransfer = action === "expense" ? suggestTransfer(search) : null;
+  const options = categoriesFor(kind === "transfer" ? "expense" : kind).filter((item) => !query || item.toLocaleLowerCase("pt-BR").includes(query) || item === suggested);
+  const transferOptions = action === "expense" ? transferCategories.filter((item) => !query || item.toLocaleLowerCase("pt-BR").includes(query) || item === suggestedTransfer) : [];
   const firstRows = query ? [] : recentCategories;
   const goalOptions = savingsGoals.filter((item) => !query || item.name.toLocaleLowerCase("pt-BR").includes(query));
 
@@ -287,6 +295,17 @@ export function AddFlow() {
                           <CategoryRow key={item} category={item} kind={kind} subtitle={item === suggested ? "Sugerida pela busca" : spentThisMonth.get(item) ? `${formatCurrency(spentThisMonth.get(item)!, currency)} neste mês` : kind === "income" ? "Entrada" : "Saída"} onPick={pickCategory} />
                         ))}
                       </ul>
+                      {transferOptions.length ? (
+                        <>
+                          <h3 className="mt-4 text-xl font-semibold">Não conta como gasto</h3>
+                          <p className="text-sm text-[var(--color-muted)]">Dinheiro que só mudou de lugar. As compras do cartão já entram uma a uma.</p>
+                          <ul className="mt-1">
+                            {transferOptions.map((item) => (
+                              <CategoryRow key={item} category={item} kind="transfer" subtitle={item === suggestedTransfer ? "Sugerida pela busca" : item === "Pagamento de fatura" ? "Fatura do cartão de crédito" : "Entre contas suas"} onPick={pickCategory} />
+                            ))}
+                          </ul>
+                        </>
+                      ) : null}
                     </>
                   )}
                 </div>
@@ -330,16 +349,18 @@ export function AddFlow() {
 
                 <div className="min-h-6 flex-1" />
 
-                {budgetAfter && budgetAfter.level !== "ok" ? (
-                  <p className={`mb-3 flex items-start gap-2 text-sm ${budgetAfter.level === "over" ? "text-[var(--color-error)]" : "text-[var(--color-warning)]"}`} role="status">
+                {budgetNotice ? (
+                  <p className={`mb-3 flex items-start gap-2 text-sm ${budgetNotice.tone === "over" ? "text-[var(--color-error)]" : "text-[var(--color-warning)]"}`} role="status">
                     <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-                    {budgetAfter.category} fica em {Math.round(budgetAfter.ratio * 100)}% do orçamento do mês.
+                    <span>{budgetNotice.text}{budgetNotice.tone === "over" ? " O gasto é registrado normalmente." : ""}</span>
                   </p>
                 ) : null}
                 <p className="flex flex-wrap items-center gap-x-2 text-sm">
-                  <span className={`h-4 w-4 rounded-full ${action === "expense" ? "bg-[var(--color-action)]" : "bg-[var(--color-success)]"}`} aria-hidden="true" />
+                  <span className={`h-4 w-4 rounded-full ${kind === "transfer" ? "bg-[var(--color-secondary)]" : action === "expense" ? "bg-[var(--color-expense)]" : "bg-[var(--color-income)]"}`} aria-hidden="true" />
                   {action === "goal" && goal ? (
                     <><span className="font-semibold">Guardado em {goal.name}</span><span className="tabular text-[var(--color-muted)]">{formatCurrency(goalProgress(goal, today).savedCents, currency)} → {formatCurrency(goalProgress(goal, today).savedCents + (date > today ? 0 : amountCents), currency)}</span></>
+                  ) : kind === "transfer" ? (
+                    <><span className="font-semibold">Movimentação interna</span><span className="text-[var(--color-muted)]">não altera saldo nem orçamento</span></>
                   ) : action === "expense" ? (
                     <><span className="font-semibold">Ainda pode gastar</span><span className="tabular text-[var(--color-muted)]">{spendable ? `${formatCurrency(spendable.amountCents - amountCents, currency)} depois` : "—"}</span></>
                   ) : (
@@ -348,7 +369,7 @@ export function AddFlow() {
                 </p>
                 {error ? <p className="mt-3 text-sm text-[var(--color-error)]" role="alert">{error}</p> : null}
                 <button type="button" onClick={() => void save()} disabled={isSaving} className={`${inkButton} mt-4 w-full`}>
-                  {isSaving ? "Salvando..." : action === "goal" ? (date > today ? "Planejar aporte" : "Guardar") : action === "income" ? "Registrar receita" : "Registrar gasto"}
+                  {isSaving ? "Salvando..." : action === "goal" ? (date > today ? "Planejar aporte" : "Guardar") : action === "income" ? "Registrar receita" : kind === "transfer" ? "Registrar movimentação" : "Registrar gasto"}
                 </button>
                 <p className="mt-3 text-center font-mono text-xs text-[var(--color-muted)]">O Prumo só registra: nenhum dinheiro é movimentado.</p>
               </div>
@@ -378,6 +399,7 @@ type ReceiptDetail = { icon: ReactNode; title: string; text: string; tone?: "war
 
 function Receipt({
   action,
+  kind,
   amount,
   title,
   icon,
@@ -388,6 +410,7 @@ function Receipt({
   onAgain,
 }: {
   action: Action;
+  kind: TransactionKind;
   amount: string;
   title: string;
   icon: ReactNode;
@@ -409,7 +432,7 @@ function Receipt({
           <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-[-0.01em]">{title}</h1>
           <p className="mt-2 text-sm">{when}</p>
           <p className="text-sm">{subtitle}</p>
-          <p className="tabular mt-8 text-display font-semibold">{action === "income" ? "+" : ""}{amount}</p>
+          <p className={`tabular mt-8 text-display font-semibold ${action === "goal" || kind === "transfer" ? "" : kind === "income" ? "text-[var(--color-income)]" : "text-[var(--color-expense)]"}`}>{action === "goal" || kind === "transfer" ? "" : kind === "income" ? "+" : "−"}{amount}</p>
           <h2 className="mt-10 text-xl font-semibold">Detalhes</h2>
           <ul className="mt-4 space-y-5 pb-6">
             {details.filter(Boolean).map((detail) => detail ? (

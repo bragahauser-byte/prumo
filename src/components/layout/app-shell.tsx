@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -16,13 +15,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { BrandLogo, LoadingScreen } from "@/components/brand";
 import { useFinance } from "@/components/finance-provider";
 import { GoalCelebrationWatcher } from "@/components/goal-celebration";
 import { NotificationBell, NotificationsProvider } from "@/components/notifications";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ToastProvider } from "@/components/ui/toast";
 import { focusRing } from "@/components/ui/primitives";
-import { asset } from "@/lib/base-path";
 
 type NavigationItem = { href: string; label: string; mobileLabel?: string; title?: string; subtitle: string; icon: LucideIcon; mobile?: boolean };
 
@@ -73,9 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (isLoading || !hasLoaded || (!error && ((!onboardingComplete && !isOnboarding) || (onboardingComplete && isOnboarding && !isOnboardingEdit)))) {
     return (
-      <main className="flex min-h-dvh items-center justify-center px-6 pt-16 pb-10 text-sm text-[var(--color-muted)]" role="status">
-        Carregando seus dados financeiros...
-      </main>
+      <LoadingScreen label="Carregando seus dados financeiros" />
     );
   }
 
@@ -97,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="mx-auto flex min-h-dvh max-w-[1280px] gap-10 px-4 pb-[calc(148px+env(safe-area-inset-bottom))] pt-[max(env(safe-area-inset-top),64px)] sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
         <aside className="sticky top-10 hidden h-[calc(100dvh-5rem)] w-60 shrink-0 flex-col border-r border-[var(--color-border)] pr-6 lg:flex">
           <Link href="/overview" className={`mb-8 flex items-center gap-3 rounded-2xl px-3 py-1 ${focusRing}`}>
-            <Image src={asset("/app-icon.png")} alt="" width={36} height={36} className="rounded-[10px]" />
+            <BrandLogo size={36} />
             <span className="text-xl font-semibold">Prumo</span>
           </Link>
           <Link href="/add" className={`mb-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-5 text-base font-semibold text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-pressed)] ${focusRing}`}>

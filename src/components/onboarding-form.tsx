@@ -158,18 +158,25 @@ export function OnboardingForm({
   }
 
   if (step === -1) {
+    const secondary = "flex min-h-14 w-full items-center justify-center rounded-full border border-[var(--color-forest-green)] text-base font-semibold text-[var(--color-forest-green)] transition-colors hover:bg-[var(--color-soft)] " + focusRing;
     return (
-      <div className="flex min-h-dvh flex-col bg-[linear-gradient(200deg,#2F5711_0%,#163300_55%,#0E2200_100%)] px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-24 text-white">
-        <div className="flex items-center gap-3">
-          <Image src={asset("/app-icon.png")} alt="" width={40} height={40} priority className="rounded-xl" />
-          <span className="text-3xl font-semibold">Prumo</span>
+      <div className="flex min-h-dvh flex-col bg-white px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-20">
+        <h1 className="text-4xl font-semibold leading-[38px] tracking-[-0.02em] text-[#0F0F0F]">Seu próximo passo começa aqui.</h1>
+        <div className="flex flex-1 items-center justify-center py-8">
+          <Image src={asset("/illustrations/welcome.png")} alt="" width={313} height={313} priority draggable={false} className="h-auto w-full max-w-[313px] select-none" />
         </div>
-        <h1 className="mt-6 max-w-[320px] text-4xl font-semibold leading-tight tracking-[-0.02em]">Seu dinheiro no prumo começa aqui.</h1>
-        <div className="mt-auto flex flex-col gap-4">
-          <button type="button" onClick={() => setStep(0)} className="min-h-14 w-full rounded-full bg-[var(--color-accent)] text-base font-semibold text-[var(--color-on-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Começar</button>
-          {mode === "supabase"
-            ? <Link href="/login" className="flex min-h-14 w-full items-center justify-center rounded-full border border-white/90 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Faça login</Link>
-            : <Link href="/terms" className="flex min-h-14 w-full items-center justify-center rounded-full border border-white/90 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Como seus dados são guardados</Link>}
+        <div className="flex flex-col gap-4">
+          {mode === "supabase" ? (
+            <>
+              <Link href="/register" className={`${inkButton} w-full`}>Criar uma conta</Link>
+              <Link href="/login" className={secondary}>Faça login</Link>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => setStep(0)} className={`${inkButton} w-full`}>Criar meu perfil</button>
+              <Link href="/terms" className={secondary}>Como seus dados são guardados</Link>
+            </>
+          )}
         </div>
       </div>
     );

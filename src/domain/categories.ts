@@ -1,4 +1,9 @@
-export type TransactionKind = "expense" | "income";
+/**
+ * expense: gasto · income: entrada · transfer: movimentação interna (transferência entre contas próprias
+ * ou pagamento de fatura do cartão). Movimentações internas não são gasto nem entrada e não mexem no saldo:
+ * as compras do cartão já foram registradas uma a uma.
+ */
+export type TransactionKind = "expense" | "income" | "transfer";
 
 export const expenseCategories = [
   "Moradia",
@@ -21,8 +26,17 @@ export const incomeCategories = [
   "Outras receitas",
 ] as const;
 
+export const transferCategories = [
+  "Pagamento de fatura",
+  "Transferência entre contas",
+] as const;
+
 export function categoriesFor(kind: TransactionKind): readonly string[] {
-  return kind === "income" ? incomeCategories : expenseCategories;
+  return kind === "income" ? incomeCategories : kind === "transfer" ? transferCategories : expenseCategories;
+}
+
+export function isTransferCategory(category: string) {
+  return (transferCategories as readonly string[]).includes(category);
 }
 
 const keywords: Record<string, string[]> = {
@@ -39,6 +53,8 @@ const keywords: Record<string, string[]> = {
   Freelance: ["freela", "freelance", "projeto", "cliente", "job"],
   Reembolso: ["reembolso", "estorno", "devolucao", "pix de volta"],
   Rendimentos: ["rendimento", "juros", "dividendo", "cdb", "poupanca"],
+  "Pagamento de fatura": ["fatura do cartao", "fatura cartao", "pagamento da fatura", "pagamento de fatura", "cartao de credito"],
+  "Transferência entre contas": ["transferencia", "entre contas", "minha conta", "para mim", "ted", "doc"],
 };
 
 function normalize(value: string) {
@@ -54,4 +70,9 @@ export function suggestCategory(description: string, kind: TransactionKind): str
     if (words.some((word) => new RegExp(`(^|[^a-z0-9])${word}([^a-z0-9]|$)`).test(text))) return category;
   }
   return null;
+}
+
+/** Quando a descrição parece uma movimentação interna (fatura do cartão, transferência própria). */
+export function suggestTransfer(description: string): string | null {
+  return suggestCategory(description, "transfer");
 }

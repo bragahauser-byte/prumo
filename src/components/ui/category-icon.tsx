@@ -1,6 +1,8 @@
 import Image from "next/image";
 import {
+  ArrowLeftRight,
   Banknote,
+  CreditCard,
   Laptop,
   RotateCcw,
   ShoppingBag,
@@ -29,6 +31,8 @@ const categoryIcons: Record<string, IconSource> = {
   Reembolso: { lucide: RotateCcw },
   Rendimentos: { lucide: TrendingUp },
   "Outras receitas": { lucide: Banknote },
+  "Pagamento de fatura": { lucide: CreditCard },
+  "Transferência entre contas": { lucide: ArrowLeftRight },
 };
 
 /**
@@ -100,7 +104,7 @@ export function CategoryIcon({
 }) {
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full ${kind === "income" ? "bg-[var(--color-success-soft)] text-[var(--color-success)]" : "bg-[var(--color-soft)] text-[var(--color-text)]"}`}
+      className={`flex shrink-0 items-center justify-center rounded-full ${kind === "income" ? "bg-[var(--color-income-soft)] text-[var(--color-income)]" : kind === "transfer" ? "bg-[var(--color-soft)] text-[var(--color-muted)]" : "bg-[var(--color-soft)] text-[var(--color-text)]"}`}
       style={{ width: size, height: size }}
     >
       <CategoryGlyph category={category} size={Math.round(size * 0.68)} />

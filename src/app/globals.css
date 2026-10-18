@@ -62,6 +62,12 @@
   --color-error: #a8200d;
   --color-error-soft: #fbe6e2;
 
+  /* Entradas e saídas: verde para o que entra, vermelho para o que sai */
+  --color-income: #2f5711;
+  --color-income-soft: #e2f6d5;
+  --color-expense: #c7271a;
+  --color-expense-soft: #fde7e4;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -146,6 +152,18 @@
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
+}
+
+/* Carregamento: agulha da bússola oscilando devagar entre -19,83° e 48,84° */
+@keyframes compass-sway {
+  0% { transform: rotate(-19.83deg); }
+  100% { transform: rotate(48.84deg); }
+}
+
+.compass-needle {
+  transform-box: view-box;
+  transform-origin: 69.12px 69.12px;
+  animation: compass-sway 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
 }
 
 /* Comemoração de meta atingida */

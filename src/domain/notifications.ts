@@ -95,15 +95,19 @@ export function buildAlerts(input: NotificationInput): AppNotification[] {
   }
 
   for (const budget of budgetUsage(input.budgets, input.movements, month)) {
-    if (budget.level === "ok") continue;
+    // Alertas configuráveis por orçamento: null desliga os avisos desta categoria.
+    if (budget.level === "ok" || budget.alertAt === null) continue;
     const over = budget.level === "over";
+    const reached = budget.level === "reached";
     alerts.push({
       id: `budget:${budget.category}:${month}:${budget.level}`,
       level: "alert",
-      title: over ? `${budget.category} passou do limite` : `${budget.category} perto do limite`,
+      title: over ? `${budget.category} passou do limite` : reached ? `${budget.category} atingiu o limite` : `${budget.category} perto do limite`,
       body: over
         ? `${formatMoney(-budget.remainingCents)} acima do limite de ${formatMoney(budget.limitCents)}. Vale segurar os próximos gastos dessa categoria.`
-        : `Você já usou ${Math.round(budget.ratio * 100)}% do limite. Restam ${formatMoney(budget.remainingCents)} até o fim do mês.`,
+        : reached
+          ? `Os ${formatMoney(budget.limitCents)} do mês já foram usados. Novos gastos aqui passam do limite.`
+          : `Você já usou ${Math.floor(budget.ratio * 100)}% do limite. Restam ${formatMoney(budget.remainingCents)} até o fim do mês.`,
       href: "/budgets",
       action: "Ver orçamento",
     });
