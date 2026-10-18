@@ -1,0 +1,11 @@
+project_id = "personal-finance"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+
+[db.seed]
+enabled = false
+
+[auth.email]
+enable_confirmations = true
