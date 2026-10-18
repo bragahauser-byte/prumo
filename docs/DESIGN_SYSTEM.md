@@ -8,6 +8,8 @@ No desktop, a navegação lateral é estável; no celular, uma barra flutuante t
 
 **Cabeçalho das telas:** título e subtítulo no mesmo tamanho (24 px), diferenciados só por peso e cor — título em `--color-text` semibold, subtítulo em `--color-tertiary` regular. No celular começa a **64 px do topo**. À direita, o sino de notificações (com contador de novos alertas e lembretes) e a foto de perfil.
 
+**Logo e carregamento:** a bússola tem versão clara (`public/brand/logo-light.svg`) e escura (`logo-dark.svg`), escolhidas por `prefers-color-scheme` no favicon (`brand/icon.svg`), nos PNGs de ícone e no `BrandLogo`. A tela de carregamento (`LoadingScreen`) usa fundo `#0F0F0F` e a agulha oscila entre −19,83° e 48,84° em 2,8 s, ida e volta, com curva suave.
+
 ### Telas com referência obrigatória
 
 - **Registro (`/add`)** — teclado em tela cheia em verde vivo, com valor e texto em verde floresta; botões "Receita", "Guardar" e "Gasto"; painel branco que sobe para escolher categoria (ou meta), descrição, confirmação com chips (data, status, repetição) e comprovante com confete.
@@ -30,7 +32,7 @@ No desktop, a navegação lateral é estável; no celular, uma barra flutuante t
 | Bordas | `--color-border` / `--color-border-overlay` | `#E5E7E3` / `#C9CCC6` | divisores, bordas de controles e campos ativos |
 | Sentimento | `--color-success` / `--color-warning` (+ `-fill`) / `--color-error` | `#2F5711` / `#8A6100` (`#EDC843`) / `#A8200D` | sucesso e metas batidas, atenção, erro e saldo negativo; cada um com `-soft` para fundos |
 
-Gráficos: despesas em verde floresta e receitas em verde vivo (contraste alto entre si). Metas no anel usam `goalShades`, alternando tons escuros e claros para que fatias vizinhas nunca se confundam; cada fatia tem legenda com nome e porcentagem.
+**Entradas e saídas:** `--color-income` (`#2F5711`) para o que entra e `--color-expense` (`#C7271A`) para o que sai, em valores, totais e gráficos. Gráficos: despesas em vermelho e receitas em verde vivo (contraste alto entre si). Metas no anel usam `goalShades`, alternando tons escuros e claros para que fatias vizinhas nunca se confundam; cada fatia tem legenda com nome e porcentagem.
 
 ## Tipografia
 

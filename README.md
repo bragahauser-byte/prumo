@@ -1,32 +1,78 @@
-# Prumo
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/logo-dark-192.png">
+    <img src="public/brand/logo-light-192.png" alt="Logo do Prumo" width="96" height="96">
+  </picture>
+</p>
 
-**Finanças pessoais para entender, planejar e melhorar a relação com o dinheiro.**
+<h1 align="center">Prumo</h1>
 
-**Acesse:** https://bragahauser-byte.github.io/prumo/
+<p align="center">
+  <strong>Finanças pessoais para entender, planejar e melhorar a relação com o dinheiro.</strong><br>
+  Registre em segundos, veja para onde vai cada real e chegue às suas metas — sem conectar banco e sem movimentar dinheiro.
+</p>
 
-O Prumo não movimenta dinheiro. Ele organiza o que você registra para responder, de forma clara, três perguntas: *como está minha vida financeira agora?*, *quanto ainda posso gastar?* e *o que vem pela frente?* — e assim antecipar problemas antes que aconteçam.
+<p align="center">
+  <a href="https://bragahauser-byte.github.io/prumo/"><strong>Abrir o app</strong></a>
+  ·
+  <a href="docs/PRODUCT_SPEC.md">Produto</a>
+  ·
+  <a href="docs/DESIGN_SYSTEM.md">Design system</a>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/00-boas-vindas.png" alt="Boas-vindas" width="200">
+  <img src="docs/screenshots/01-inicio.png" alt="Início" width="200">
+  <img src="docs/screenshots/02-registro.png" alt="Registro de gasto com o valor primeiro" width="200">
+  <img src="docs/screenshots/04-categorias.png" alt="Gastos por categoria" width="200">
+</p>
+
+## Por que o Prumo
+
+O Prumo não movimenta dinheiro. Ele organiza o que você registra para responder, com clareza, três perguntas:
+
+- **Como está minha vida financeira agora?**
+- **Quanto ainda posso gastar este mês?**
+- **O que vem pela frente?**
+
+Assim dá para antecipar problemas antes que aconteçam: a conta que vence amanhã, a categoria que está estourando, a meta que ficou para trás.
 
 ## O que o app faz
 
 | | Funcionalidade | Resumo |
 |---|---|---|
-| 🏠 | **Início** | Saldo disponível, quanto ainda pode gastar no mês, receitas e despesas com comparação ao mês anterior, próximos vencimentos e atalhos. |
-| 💸 | **Registro de receitas e despesas** | Valor digitado primeiro num teclado em tela cheia; depois descrição, categoria sugerida automaticamente, data, status e repetição. Busca, filtros, edição e exclusão. |
-| 🎯 | **Orçamentos por categoria** | Limite mensal por categoria, quanto resta e alertas ao chegar a 80% e ao passar do limite. |
-| 📅 | **Agenda: contas a pagar e a receber** | Atrasadas, próximos 7 dias e mais adiante; status previsto, pago, recebido ou atrasado; recorrências semanais, mensais, anuais ou personalizadas. |
-| 🐷 | **Metas** | Doze tipos com ilustração 3D (viagem, reserva de emergência, carro, casa…), várias metas criadas de uma vez, anel dividido entre elas, barra com o ritmo esperado para hoje e uma comemoração quando a meta é atingida. |
-| 🔔 | **Notificações** | Alertas importantes (vencimentos, orçamento no limite, meta fora do ritmo), lembretes no horário que você escolher (desligados por padrão), até três insights e confirmações discretas na tela. |
-| 📊 | **Relatórios** | Evolução de seis meses, categorias que mais pesam, comparação entre meses, aumentos fora do comum e estimativa de sobra no fim do mês. |
+| 🏠 | **Início** | Saldo disponível, quanto ainda pode gastar no mês, entradas e saídas com comparação ao mês anterior, próximos vencimentos e atalhos. |
+| 💸 | **Registro de entradas e saídas** | Valor primeiro, num teclado em tela cheia; depois categoria sugerida pela descrição, data, status e repetição. Busca, filtros, edição e exclusão. |
+| 📊 | **Gastos por categoria** | Total do período somado a partir dos lançamentos, participação de cada categoria, gráfico de distribuição, ordem por maior ou menor gasto, comparação com o período anterior e filtros por mês ou intervalo de datas. |
+| 🎯 | **Orçamento mensal** | Limite por categoria com gasto, restante, porcentagem usada e estado (normal, próximo do limite, atingido ou ultrapassado). Alertas configuráveis; um gasto acima do limite é registrado e o excedente aparece. |
+| 🔁 | **Movimentações internas** | Transferência entre contas próprias e pagamento de fatura não contam como gasto nem mudam o saldo — as compras do cartão já foram registradas uma a uma. |
+| 📅 | **Agenda** | Contas a pagar e a receber: atrasadas, próximos 7 dias e adiante; recorrências semanais, mensais, anuais ou personalizadas. |
+| 🐷 | **Metas** | Doze tipos com ilustração 3D, várias metas de uma vez, anel dividido entre elas, barra com o ritmo esperado para hoje e uma comemoração quando a meta é atingida. |
+| 🔔 | **Notificações** | Alertas importantes, lembretes no horário que você escolher (desligados por padrão), até três insights e confirmações discretas na tela. |
+| 📈 | **Relatórios** | Evolução de seis meses, categorias que mais pesam, aumentos fora do comum e estimativa de sobra no fim do mês. |
 
-Detalhes e regras de cálculo em [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
+Regras de cálculo em [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
+
+## Telas
+
+<p align="center">
+  <img src="docs/screenshots/03-extrato.png" alt="Extrato com entradas em verde e saídas em vermelho" width="200">
+  <img src="docs/screenshots/05-orcamentos.png" alt="Orçamentos por categoria" width="200">
+  <img src="docs/screenshots/06-metas.png" alt="Metas com anel dividido" width="200">
+  <img src="docs/screenshots/07-nova-meta.png" alt="Criação de várias metas" width="200">
+</p>
+<p align="center">
+  <img src="docs/screenshots/08-relatorios.png" alt="Relatórios" width="200">
+  <img src="docs/screenshots/09-carregamento.png" alt="Tela de carregamento com a bússola" width="200">
+</p>
 
 ## Design
 
-- Escala tipográfica fixa: 12, 14, 16, 20, 24, 28 e 32 px.
-- Paleta em tokens (`src/app/globals.css`): verde vivo e verde floresta como cores principais, secundárias para categorias e gráficos, tokens de conteúdo, interação, superfície, borda e sentimento.
-- Fluxo "valor primeiro" para todo momento em que se digita dinheiro.
-- Ícones de linha por categoria e ilustrações isométricas 3D (bnbicons.com) em `public/illustrations` e `public/goal-icons`.
-- Cabeçalho com título e subtítulo em 24 px; no celular, 64 px do topo e barra de navegação a 40 px da borda inferior.
+- **Paleta:** verde vivo (`#9FE870`) e verde floresta (`#163300`) como cores principais; verde para o que entra e vermelho para o que sai; secundárias para categorias e gráficos. Tokens em `src/app/globals.css`.
+- **Tipografia:** escala fixa de 12, 14, 16, 20, 24, 28 e 32 px.
+- **Logo:** bússola com versões clara e escura, escolhidas pelo tema do sistema (ícone da aba, ícone do app e no próprio README).
+- **Ilustrações** isométricas 3D (bnbicons.com) em `public/illustrations` e `public/goal-icons`.
+- **Celular primeiro:** cabeçalho a 64 px do topo, navegação flutuante a 40 px da borda inferior, alvos de toque de pelo menos 44 px.
 
 Mais em [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md).
 
@@ -55,9 +101,10 @@ supabase db reset
 supabase test db
 ```
 
-## Publicação no GitHub Pages
+## Publicação
 
-Cada push na `main` roda o workflow `.github/workflows/pages.yml`: testes, build estático (`DEPLOY_TARGET=pages`, servido em `/prumo`) e publicação. A versão publicada usa o modo local — os dados ficam no navegador de quem usa; login e sincronização com Supabase exigem um servidor Next (ex.: Vercel).
+- **GitHub Pages:** cada push na `main` roda `.github/workflows/pages.yml` — testes, build estático (`DEPLOY_TARGET=pages`, servido em `/prumo`) e publicação. Usa o modo local.
+- **Vercel:** importe o repositório; o build padrão do Next funciona sem configuração (modo local). Com as variáveis do Supabase no projeto, login e sincronização passam a funcionar.
 
 ## Scripts
 
@@ -71,11 +118,11 @@ npm run build      # build de produção
 
 ## Estrutura
 
-- `src/app` — rotas: `overview`, `transactions`, `add`, `bills`, `budgets`, `goals`, `reports`, `settings`, onboarding e autenticação
+- `src/app` — rotas: `overview`, `transactions`, `add`, `bills`, `budgets`, `goals`, `reports` (e `reports/categories`), `settings`, onboarding e autenticação
 - `src/components` — telas, fluxo de registro e kit de interface (`ui/`)
-- `src/domain` — regras puras: dinheiro, recorrência, categorias e planejamento
+- `src/domain` — regras puras: dinheiro, recorrência, categorias, planejamento, análise por categoria e notificações
 - `src/lib` — repositórios (local e Supabase), formatação e datas
 - `supabase` — migrations e testes de RLS
-- `docs` — produto, design, arquitetura, modelo de dados, segurança, testes e deploy
+- `docs` — produto, design, arquitetura, modelo de dados, segurança, testes, deploy e prints
 
 Veja também [arquitetura](docs/ARCHITECTURE.md), [modelo de dados](docs/DATA_MODEL.md), [segurança](docs/SECURITY.md), [plano de testes](docs/TEST_PLAN.md) e [deploy](docs/DEPLOYMENT.md).

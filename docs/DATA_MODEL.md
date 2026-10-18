@@ -41,3 +41,6 @@ When Supabase is configured, `src/lib/finance/supabase-repository.ts` implements
 - `budgets` has one monthly limit per `(user_id, category)`.
 - `savings_goals` holds target, optional deadline and icon; `goal_contributions` holds `planned` or `done` contributions and cascades on goal deletion. Contributions never move money.
 - Local data saved before these fields existed is read with defaults (`kind = expense`, `interval = 1`, empty budgets and goals).
+
+- `expenses.kind` and `recurring_rules.kind` accept `transfer` (internal movement: transfer between own accounts or credit card bill payment). Transfers never count as spending and do not change the balance.
+- `budgets.alert_at` (local `alertAt`) is the percentage of the limit that triggers the "near the limit" alert; `null` turns alerts off for that category. Older data defaults to 80.
