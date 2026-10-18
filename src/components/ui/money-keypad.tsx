@@ -129,7 +129,7 @@ export function KeypadGrid({ onPress, decimals = 2 }: { onPress: (key: string) =
           type="button"
           onClick={() => onPress(key)}
           aria-label={key === "backspace" ? "Apagar" : key === "," ? "Vírgula" : key}
-          className="flex h-[60px] items-center justify-center rounded-2xl text-2xl font-medium transition-colors active:bg-black/10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current"
+          className="flex h-[60px] items-center justify-center rounded-2xl text-2xl font-medium transition-colors active:bg-[#163300]/10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current"
         >
           {key === "backspace" ? <ChevronLeft size={26} strokeWidth={2.25} aria-hidden="true" /> : key === "," ? <span className="-mt-3">,</span> : key}
         </button>
@@ -141,8 +141,8 @@ export function KeypadGrid({ onPress, decimals = 2 }: { onPress: (key: string) =
 export type KeypadTone = "action" | "success";
 
 const toneBackground: Record<KeypadTone, string> = {
-  action: "bg-[var(--color-action)]",
-  success: "bg-[var(--color-success)]",
+  action: "bg-[var(--color-accent)]",
+  success: "bg-[var(--color-accent)]",
 };
 
 /**
@@ -202,14 +202,14 @@ export function MoneyKeypad({
         aria-label={title}
         data-keypad=""
         tabIndex={-1}
-        className={`animate-sheet-in flex w-full flex-col text-white outline-none lg:h-[min(820px,calc(100dvh-48px))] lg:max-w-[420px] lg:rounded-[40px] lg:shadow-[0_24px_80px_rgba(0,0,0,0.3)] ${toneBackground[tone]}`}
+        className={`animate-sheet-in flex w-full flex-col text-[#163300] outline-none lg:h-[min(820px,calc(100dvh-48px))] lg:max-w-[420px] lg:rounded-[40px] lg:shadow-[0_24px_80px_rgba(0,0,0,0.3)] ${toneBackground[tone]}`}
       >
         <div className="flex items-center justify-between gap-3 px-4 pt-[max(env(safe-area-inset-top),16px)]">
           <button
             type="button"
             onClick={onClose}
             aria-label={closeVariant === "back" ? "Voltar" : "Fechar"}
-            className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-[#163300]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#163300]"
           >
             {closeVariant === "back" ? <ChevronLeft size={24} aria-hidden="true" /> : <X size={22} aria-hidden="true" />}
           </button>
@@ -221,7 +221,7 @@ export function MoneyKeypad({
 
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
           <AmountDisplay value={keypad.value} currency={currency} feedback={keypad.feedback} bumpKey={keypad.bumpKey} className={keypad.value ? "" : "opacity-60"} />
-          {helper ? <div className="mt-4 min-h-5 text-sm text-white/85">{helper}</div> : null}
+          {helper ? <div className="mt-4 min-h-5 text-sm text-[#163300]/80">{helper}</div> : null}
         </div>
 
         <div className="px-4"><KeypadGrid onPress={keypad.press} decimals={keypad.decimals} /></div>
@@ -231,7 +231,7 @@ export function MoneyKeypad({
             type="button"
             onClick={() => submitRef.current()}
             aria-disabled={!canSubmit}
-            className={`min-h-12 w-full rounded-full bg-black/15 text-base font-semibold transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${canSubmit ? "" : "opacity-60"}`}
+            className={`min-h-12 w-full rounded-full bg-[#163300]/10 text-base font-semibold transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#163300] ${canSubmit ? "" : "opacity-60"}`}
           >
             {submitLabel}
           </button>

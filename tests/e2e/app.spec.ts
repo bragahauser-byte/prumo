@@ -102,6 +102,12 @@ test("keeps the selected tab and layout consistent across the main screens on mo
     }
     expect(await hasHorizontalOverflow(page), `${screen.path} should not overflow horizontally`).toBe(false);
   }
+
+  // Cabeçalho a 64 px do topo e barra de navegação a 40 px da borda inferior.
+  const headerTop = await page.getByRole("heading", { level: 1 }).evaluate((element) => element.getBoundingClientRect().top);
+  expect(headerTop).toBe(64);
+  const navigationBox = await page.getByRole("navigation", { name: "Navegação principal" }).last().boundingBox();
+  expect(844 - (navigationBox!.y + navigationBox!.height)).toBe(40);
 });
 
 test("registers an expense amount first, picks the suggested category and marks it as paid later", async ({ page }) => {
@@ -137,7 +143,8 @@ test("creates a savings goal by typing the amount directly and adds money to it"
   await page.goto("/goals");
   await page.getByRole("link", { name: "Criar primeira meta" }).click();
   await expect(page).toHaveURL(/\/goals\/new$/);
-  await page.getByRole("radio", { name: "Viagem" }).click();
+  await expect(page.getByText(/^\d\/\d$/)).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "Viagem" }).click();
   await page.getByRole("button", { name: "Continuar" }).click();
   await page.getByLabel("Valor da meta").fill("6000");
   await expect(page.getByLabel("Valor da meta")).toHaveValue("6.000");
@@ -145,6 +152,7 @@ test("creates a savings goal by typing the amount directly and adds money to it"
   await page.getByRole("radio", { name: /Em 1 ano/ }).click();
   await page.getByRole("button", { name: "Criar meta" }).click();
   await expect(page).toHaveURL(/\/goals\/detail\?id=.+/);
+  await expect(page.getByText("Meta criada com sucesso")).toBeVisible();
 
   await page.getByRole("link", { name: "Guardar dinheiro" }).click();
   await typeOnKeypad(page, "300");
@@ -152,6 +160,104 @@ test("creates a savings goal by typing the amount directly and adds money to it"
   await page.getByRole("button", { name: "Guardar", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Viagem" })).toBeVisible();
   await expect(page.getByText("5% · R$ 300,00 de R$ 6.000,00")).toBeVisible();
+});
+
+test("creates several goals at once and splits the ring between them", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/goals/new");
+  for (const name of ["Viagem", "Carro", "Presente"]) await page.getByRole("checkbox", { name }).click();
+  await expect(page.getByRole("img", { name: "3 metas escolhidas" })).toBeVisible();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByLabel("Valor da meta Viagem").fill("8000");
+  await page.getByLabel("Valor da meta Carro").fill("30000");
+  await page.getByLabel("Valor da meta Presente").fill("500");
+  await expect(page.getByRole("img", { name: "Total das metas: R$ 38.500,00" })).toBeVisible();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByRole("radiogroup", { name: "Prazo de Presente" }).getByRole("radio", { name: "Em 6 meses" }).click();
+  await page.getByRole("button", { name: "Criar 3 metas" }).click();
+  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page.getByText("3 metas criadas com sucesso")).toBeVisible();
+  for (const name of ["Viagem", "Carro", "Presente"]) await expect(page.getByRole("progressbar", { name: `Progresso de ${name}` })).toBeVisible();
+});
+
+test("celebrates when a goal reaches its target, only once", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/goals/new");
+  await page.getByRole("checkbox", { name: "Presente" }).click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByLabel("Valor da meta").fill("500");
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByRole("button", { name: "Criar meta" }).click();
+  await expect(page).toHaveURL(/\/goals\/detail\?id=.+/);
+
+  await page.getByRole("link", { name: "Guardar dinheiro" }).click();
+  await typeOnKeypad(page, "500");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await page.getByRole("button", { name: "Concluir" }).click();
+  const celebration = page.getByRole("dialog", { name: "Meta atingida!" });
+  await expect(celebration).toBeVisible();
+  await expect(celebration.getByText(/Você completou Presente/)).toBeVisible();
+  await celebration.getByRole("button", { name: "Fechar" }).click();
+  await expect(celebration).toBeHidden();
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Meta atingida!" })).toHaveCount(0);
+});
+
+test("saves a profile photo and shows it in the header", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/settings");
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP4z8DwHwyBNAMDQwMDAwBk1Qf5V+0dGQAAAABJRU5ErkJggg==", "base64");
+  await page.locator("input[type=file]").setInputFiles({ name: "foto.png", mimeType: "image/png", buffer: png });
+  await expect(page.getByText("Foto de perfil atualizada")).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Perfil e ajustes" }).locator("img")).toHaveAttribute("src", /^data:image\/jpeg;base64,/);
+  await page.getByRole("button", { name: "Remover foto" }).click();
+  await expect(page.getByRole("link", { name: "Perfil e ajustes" }).locator("img")).toHaveCount(0);
+});
+
+test("keeps scheduled reminders off by default and saves the chosen schedule", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/settings/notifications");
+  for (const name of ["Revisar as despesas da semana", "Conferir o orçamento no início do mês", "Lembrar contas antes do vencimento", "Insight da semana como notificação"]) {
+    await expect(page.getByRole("switch", { name })).toHaveAttribute("aria-checked", "false");
+  }
+  await page.getByRole("switch", { name: "Revisar as despesas da semana" }).click();
+  await page.getByLabel("Dia da semana").selectOption("1");
+  await page.getByLabel("Horário da revisão semanal").fill("08:30");
+  await expect(page.getByText("Toda segunda-feira, às 08:30.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("switch", { name: "Revisar as despesas da semana" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText("Toda segunda-feira, às 08:30.")).toBeVisible();
+});
+
+test("lists an important alert in the notification center when a bill is due tomorrow", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/add");
+  await typeOnKeypad(page, "90");
+  await page.getByRole("button", { name: "Gasto", exact: true }).click();
+  await page.getByPlaceholder("Categoria ou o que você comprou").fill("Conta de luz");
+  await page.getByRole("button", { name: /Contas/ }).first().click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  const tomorrow = await page.evaluate(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  });
+  await page.getByLabel("Data", { exact: true }).fill(tomorrow);
+  await page.getByRole("button", { name: "Registrar gasto" }).click();
+  await page.getByRole("button", { name: "Concluir" }).click();
+  await page.goto("/overview");
+  await page.getByRole("button", { name: "Notificações, 1 nova" }).click();
+  await expect(page.getByText("Vence amanhã: Conta de luz")).toBeVisible();
+  await page.getByRole("button", { name: "Fechar" }).click();
+  await expect(page.getByRole("button", { name: "Notificações", exact: true })).toBeVisible();
 });
 
 test("sets a category budget from the keypad", async ({ page }) => {

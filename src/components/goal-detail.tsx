@@ -11,7 +11,9 @@ import { GoalIcon } from "@/components/ui/category-icon";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Sheet } from "@/components/ui/sheet";
 import { Card, SectionHeader, dangerButton, focusRing, inkButton, primaryButton, softButton, textButton } from "@/components/ui/primitives";
-import { goalProgress } from "@/domain/planning";
+import { goalPace } from "@/domain/planning";
+import { paceLabels } from "@/components/goals-screen";
+import { useToast } from "@/components/ui/toast";
 import type { FinanceGoalContribution } from "@/lib/finance/repository";
 import { formatCalendarDate, formatCurrency, formatShortDate } from "@/lib/formatting";
 
@@ -20,6 +22,7 @@ export function GoalDetail() {
   const router = useRouter();
   const { savingsGoals, saveSavingsGoal, deleteSavingsGoal, isSaving } = useFinance();
   const { today, currency } = useFinanceSummary();
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,14 +37,16 @@ export function GoalDetail() {
     );
   }
 
-  const progress = goalProgress(goal, today);
+  const pace = goalPace(goal, today);
+  const { progress } = pace;
   const contributions = [...goal.contributions].sort((left, right) => right.date.localeCompare(left.date));
 
-  async function updateContributions(next: FinanceGoalContribution[]) {
+  async function updateContributions(next: FinanceGoalContribution[], confirmation: string) {
     if (!goal) return;
     setError(null);
     try {
       await saveSavingsGoal({ ...goal, contributions: next });
+      toast(confirmation);
     } catch {
       setError("Não foi possível atualizar os aportes.");
     }
@@ -62,14 +67,20 @@ export function GoalDetail() {
       <Link href="/goals" className={`${textButton} -ml-3`}><ChevronLeft size={18} aria-hidden="true" /> Metas</Link>
 
       <Card className="flex flex-col items-center text-center">
-        <ProgressRing size={248} stroke={12} value={progress.ratio} color="var(--color-success)" track="var(--color-soft)" label={`${Math.round(progress.ratio * 100)}% da meta ${goal.name}`}>
-          <GoalIcon icon={goal.icon} size={72} />
-          <span className="mt-2 text-3xl font-semibold">{Math.round(progress.ratio * 100)}%</span>
+        <ProgressRing size={248} stroke={14} marker value={progress.ratio} color={progress.isComplete ? "var(--color-bright-green)" : "var(--color-forest-green)"} label={`${Math.floor(progress.ratio * 100)}% da meta ${goal.name}`}>
+          <GoalIcon icon={goal.icon} size={96} />
+          <span className="tabular mt-1 text-3xl font-semibold">{Math.floor(progress.ratio * 100)}%</span>
         </ProgressRing>
-        <h2 className="mt-4 text-2xl font-semibold">{goal.name}</h2>
+        <h2 className="mt-4 max-w-full text-2xl font-semibold [overflow-wrap:anywhere]">{goal.name}</h2>
         <p className="tabular mt-1 text-base text-[var(--color-muted)]">{formatCurrency(progress.savedCents, currency)} de {formatCurrency(goal.targetCents, currency)}</p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm">
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${paceLabels[pace.status].className}`}>{paceLabels[pace.status].label}</span>
+          {pace.expectedRatio !== null && !progress.isComplete && pace.expectedRatio > 0 && pace.expectedRatio < 1 ? (
+            <span className="text-[var(--color-muted)]">esperado para hoje: <span className="tabular font-semibold text-[var(--color-text)]">{Math.floor(pace.expectedRatio * 100)}%</span></span>
+          ) : null}
+        </div>
         <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
-          <Link href={`/add?goal=${goal.id}`} className={inkButton}>Guardar dinheiro</Link>
+          {progress.isComplete ? <Link href="/goals/new" className={inkButton}>Criar nova meta</Link> : <Link href={`/add?goal=${goal.id}`} className={inkButton}>Guardar dinheiro</Link>}
           <button type="button" onClick={() => setEditing(true)} className={softButton}>Editar meta</button>
         </div>
       </Card>
@@ -96,9 +107,9 @@ export function GoalDetail() {
                   <span className="block text-sm text-[var(--color-muted)]">{item.status === "done" ? "Guardado" : "Planejado"} · {formatCalendarDate(item.date)}</span>
                 </span>
                 {item.status === "planned" ? (
-                  <button type="button" disabled={isSaving} onClick={() => void updateContributions(goal.contributions.map((entry) => entry.id === item.id ? { ...entry, status: "done", date: today } : entry))} className={textButton}>Confirmar</button>
+                  <button type="button" disabled={isSaving} onClick={() => void updateContributions(goal.contributions.map((entry) => entry.id === item.id ? { ...entry, status: "done", date: today } : entry), "Aporte confirmado")} className={textButton}>Confirmar</button>
                 ) : null}
-                <button type="button" disabled={isSaving} aria-label={`Remover aporte de ${formatCurrency(item.amountCents, currency)}`} onClick={() => void updateContributions(goal.contributions.filter((entry) => entry.id !== item.id))} className={`flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-soft)] hover:text-[var(--color-error)] ${focusRing}`}>
+                <button type="button" disabled={isSaving} aria-label={`Remover aporte de ${formatCurrency(item.amountCents, currency)}`} onClick={() => void updateContributions(goal.contributions.filter((entry) => entry.id !== item.id), "Aporte removido")} className={`flex h-10 w-10 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-soft)] hover:text-[var(--color-error)] ${focusRing}`}>
                   <Trash2 size={18} aria-hidden="true" />
                 </button>
               </li>
@@ -119,7 +130,7 @@ export function GoalDetail() {
 
       {editing ? (
         <Sheet title="Editar meta" onClose={() => setEditing(false)}>
-          <GoalForm goal={goal} currency={currency} onCancel={() => setEditing(false)} onSaved={() => setEditing(false)} />
+          <GoalForm goal={goal} currency={currency} onCancel={() => setEditing(false)} onSaved={() => { setEditing(false); toast("Meta atualizada"); }} />
         </Sheet>
       ) : null}
     </div>

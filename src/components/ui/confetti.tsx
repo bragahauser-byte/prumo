@@ -1,4 +1,4 @@
-const colors = ["#0066CC", "#1E8E5A", "#D97706", "#D64545", "#7FB2E5", "#78C9A0", "#1D1D1F"];
+const colors = ["#9FE870", "#163300", "#FFC091", "#FFEB69", "#A0E1E1", "#FFD7EF", "#2F5711"];
 
 /** Pseudoaleatório determinístico para o confete ter a mesma forma em toda renderização. */
 function noise(seed: number) {
@@ -18,9 +18,9 @@ const pieces = Array.from({ length: 56 }, (_, index) => ({
 }));
 
 /** Chuva de confete de comemoração. Decorativa: some sozinha e respeita "reduzir movimento". */
-export function Confetti() {
+export function Confetti({ className = "z-[60]" }: { className?: string }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden" aria-hidden="true">
+    <div className={`pointer-events-none fixed inset-0 overflow-hidden ${className}`} aria-hidden="true">
       {pieces.map((piece, index) => (
         <span
           key={index}

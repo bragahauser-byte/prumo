@@ -7,6 +7,31 @@ import { currencyCodes, type CurrencyCode } from "../../domain/currencies";
 export type { CurrencyCode } from "../../domain/currencies";
 export type FinanceGoal = "control_expenses" | "remember_bills" | "understand_categories" | "track_available_balance";
 
+/** Lembretes programados: o usuário escolhe frequência e horário; todos começam desligados. */
+export type ReminderSettings = {
+  weeklyReview: { enabled: boolean; weekday: number; time: string };
+  monthlyBudget: { enabled: boolean; time: string };
+  billsAhead: { enabled: boolean; daysBefore: number; time: string };
+};
+
+export type NotificationSettings = {
+  /** Alertas importantes também como notificação do sistema (vencimentos, orçamento, metas fora do ritmo). */
+  alertsPush: boolean;
+  /** Insights como notificação do sistema: no máximo um por semana. */
+  insightsPush: boolean;
+  reminders: ReminderSettings;
+};
+
+export const defaultNotificationSettings: NotificationSettings = {
+  alertsPush: true,
+  insightsPush: false,
+  reminders: {
+    weeklyReview: { enabled: false, weekday: 0, time: "19:00" },
+    monthlyBudget: { enabled: false, time: "09:00" },
+    billsAhead: { enabled: false, daysBefore: 2, time: "09:00" },
+  },
+};
+
 export type FinancePreferences = {
   displayName: string | null;
   monthlyIncomeCents: number | null;
@@ -19,6 +44,9 @@ export type FinancePreferences = {
   termsAccepted: boolean;
   notificationsEnabled: boolean;
   onboardingCompleted: boolean;
+  /** Foto de perfil reduzida (JPEG em data URL, até ~60 KB). */
+  avatarDataUrl: string | null;
+  notificationSettings: NotificationSettings;
 };
 
 export type FinanceExpense = {
@@ -99,6 +127,19 @@ export interface FinanceRepository {
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const timeSchema = z.string().regex(/^\d{2}:\d{2}$/);
+const avatarSchema = z.string().regex(/^data:image\/(jpeg|png|webp);base64,/).max(200_000);
+
+export const notificationSettingsSchema = z.object({
+  alertsPush: z.boolean(),
+  insightsPush: z.boolean(),
+  reminders: z.object({
+    weeklyReview: z.object({ enabled: z.boolean(), weekday: z.number().int().min(0).max(6), time: timeSchema }),
+    monthlyBudget: z.object({ enabled: z.boolean(), time: timeSchema }),
+    billsAhead: z.object({ enabled: z.boolean(), daysBefore: z.number().int().min(1).max(7), time: timeSchema }),
+  }),
+});
+
 const preferencesSchema = z.object({
   displayName: z.string().nullable(),
   monthlyIncomeCents: z.number().int().nonnegative().nullable(),
@@ -110,6 +151,8 @@ const preferencesSchema = z.object({
   termsAccepted: z.boolean(),
   notificationsEnabled: z.boolean(),
   onboardingCompleted: z.boolean(),
+  avatarDataUrl: avatarSchema.nullable().default(null),
+  notificationSettings: notificationSettingsSchema.default(defaultNotificationSettings),
 });
 
 const kindSchema = z.enum(["expense", "income"]);

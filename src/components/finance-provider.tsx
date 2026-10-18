@@ -14,7 +14,6 @@ import {
 import { createSupabaseFinanceRepository } from "@/lib/finance/supabase-repository";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { ExpenseStatus } from "@/domain/financial";
-import { asset } from "@/lib/base-path";
 
 export type FinanceContextValue = FinanceSnapshot & {
   mode: "local" | "supabase";
@@ -93,26 +92,6 @@ export function FinanceProvider({
       cancelled = true;
     };
   }, [mode]);
-
-  useEffect(() => {
-    if (!hasLoaded || !snapshot.preferences?.notificationsEnabled || !("Notification" in window) || Notification.permission !== "granted") return;
-    const today = new Date().toISOString().slice(0, 10);
-    const dueToday = snapshot.expenses.filter((expense) => expense.status !== "paid" && expense.date === today);
-    const key = `personal-finance:notifications:shown:${today}`;
-    const notifiedIds = new Set<string>(JSON.parse(window.localStorage.getItem(key) ?? "[]") as string[]);
-    const newDueToday = dueToday.filter((expense) => !notifiedIds.has(expense.id));
-
-    for (const expense of newDueToday) {
-      new Notification(expense.kind === "income" ? `Previsto para hoje: ${expense.description}` : `Vence hoje: ${expense.description}`, {
-        body: "Abra o Prumo para atualizar o status.",
-        icon: asset("/app-icon.png"),
-        tag: `expense-${expense.id}-${today}`,
-      });
-      notifiedIds.add(expense.id);
-    }
-
-    if (newDueToday.length) window.localStorage.setItem(key, JSON.stringify([...notifiedIds]));
-  }, [hasLoaded, snapshot.expenses, snapshot.preferences?.notificationsEnabled]);
 
   const mutate = async <T,>(operation: (repository: FinanceRepository) => Promise<T>) => {
     const repository = repositoryRef.current;

@@ -7,9 +7,10 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useFinance } from "@/components/finance-provider";
 import { MoneyInput } from "@/components/ui/money-input";
+import { useToast } from "@/components/ui/toast";
 import { focusRing, inkButton, outlineButton } from "@/components/ui/primitives";
 import { currencies, type CurrencyCode } from "@/domain/currencies";
-import type { FinanceGoal, FinancePreferences } from "@/lib/finance/repository";
+import { defaultNotificationSettings, type FinanceGoal, type FinancePreferences } from "@/lib/finance/repository";
 import { asset } from "@/lib/base-path";
 import { todayISO } from "@/lib/dates";
 
@@ -39,12 +40,12 @@ const subtitles = [
   "Opcional — é o que você informa, não consultamos o banco.",
   "Escolha uma ou mais opções.",
   "Leia e aceite para continuar.",
-  "Avisamos no dia do vencimento, quando o app estiver aberto.",
+  "Só avisos úteis: contas perto do vencimento, orçamento no limite e metas fora do ritmo. Lembretes você liga depois, em Ajustes.",
 ];
 
 function Radio({ checked }: { checked: boolean }) {
   return (
-    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${checked ? "border-[var(--color-ink)]" : "border-[#E5E5EA]"}`} aria-hidden="true">
+    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${checked ? "border-[var(--color-ink)]" : "border-[var(--color-border-overlay)]"}`} aria-hidden="true">
       {checked ? <span className="h-3 w-3 rounded-full bg-[var(--color-ink)]" /> : null}
     </span>
   );
@@ -52,7 +53,7 @@ function Radio({ checked }: { checked: boolean }) {
 
 function SquareCheck({ checked }: { checked: boolean }) {
   return (
-    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${checked ? "bg-[var(--color-ink)] text-white" : "border-2 border-[#E5E5EA] bg-white"}`} aria-hidden="true">
+    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${checked ? "bg-[var(--color-ink)] text-white" : "border-2 border-[var(--color-border-overlay)] bg-white"}`} aria-hidden="true">
       {checked ? <Check size={16} strokeWidth={3} /> : null}
     </span>
   );
@@ -61,7 +62,7 @@ function SquareCheck({ checked }: { checked: boolean }) {
 function UnderlineField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block border-b border-[var(--color-ink)] pb-2 focus-within:border-[var(--color-action)]">
-      <span className="block text-xs font-semibold text-[#9A9AA0]">{label}</span>
+      <span className="block text-xs font-semibold text-[var(--color-tertiary)]">{label}</span>
       {children}
     </label>
   );
@@ -75,6 +76,7 @@ export function OnboardingForm({
   returnTo?: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const { preferences, savePreferences, isSaving, mode } = useFinance();
   const [step, setStep] = useState(editing ? 0 : -1);
   const [displayName, setDisplayName] = useState(preferences?.displayName ?? "");
@@ -112,10 +114,13 @@ export function OnboardingForm({
       termsAccepted: true,
       notificationsEnabled,
       onboardingCompleted: true,
+      avatarDataUrl: preferences?.avatarDataUrl ?? null,
+      notificationSettings: preferences?.notificationSettings ?? defaultNotificationSettings,
     };
 
     try {
       await savePreferences(nextPreferences);
+      if (editing) toast("Preferências atualizadas");
       router.replace(returnTo ?? (editing ? "/settings" : "/overview"));
     } catch {
       setError("Não foi possível salvar agora. Seus dados continuam aqui; tente novamente.");
@@ -154,14 +159,14 @@ export function OnboardingForm({
 
   if (step === -1) {
     return (
-      <div className="flex min-h-dvh flex-col bg-[linear-gradient(200deg,#7FB2E5_0%,#3D8BE0_38%,var(--color-action)_100%)] px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-24 text-white">
+      <div className="flex min-h-dvh flex-col bg-[linear-gradient(200deg,#2F5711_0%,#163300_55%,#0E2200_100%)] px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-24 text-white">
         <div className="flex items-center gap-3">
           <Image src={asset("/app-icon.png")} alt="" width={40} height={40} priority className="rounded-xl" />
           <span className="text-3xl font-semibold">Prumo</span>
         </div>
         <h1 className="mt-6 max-w-[320px] text-4xl font-semibold leading-tight tracking-[-0.02em]">Seu dinheiro no prumo começa aqui.</h1>
         <div className="mt-auto flex flex-col gap-4">
-          <button type="button" onClick={() => setStep(0)} className="min-h-14 w-full rounded-full bg-white text-base font-semibold text-[var(--color-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Começar</button>
+          <button type="button" onClick={() => setStep(0)} className="min-h-14 w-full rounded-full bg-[var(--color-accent)] text-base font-semibold text-[var(--color-on-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Começar</button>
           {mode === "supabase"
             ? <Link href="/login" className="flex min-h-14 w-full items-center justify-center rounded-full border border-white/90 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Faça login</Link>
             : <Link href="/terms" className="flex min-h-14 w-full items-center justify-center rounded-full border border-white/90 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Como seus dados são guardados</Link>}
@@ -179,7 +184,7 @@ export function OnboardingForm({
           type="button"
           aria-label={step === 0 && editing ? "Voltar aos ajustes" : "Voltar"}
           onClick={() => step > 0 ? setStep(step - 1) : editing ? router.replace(returnTo ?? "/settings") : setStep(-1)}
-          className={`flex h-11 w-11 items-center justify-center rounded-full bg-[#F0F0F0] text-[var(--color-ink)] ${focusRing}`}
+          className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] text-[var(--color-ink)] ${focusRing}`}
         >
           <ChevronLeft size={22} aria-hidden="true" />
         </button>
@@ -194,7 +199,7 @@ export function OnboardingForm({
       <main className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-10">
         {step === 0 ? (
           <UnderlineField label="Nome">
-            <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="given-name" maxLength={80} autoFocus placeholder="Seu nome ou apelido" className="mt-1 w-full bg-transparent text-2xl font-medium text-[var(--color-ink)] outline-none placeholder:text-[#C7C7CC]" />
+            <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="given-name" maxLength={80} autoFocus placeholder="Seu nome ou apelido" className="mt-1 w-full bg-transparent text-2xl font-medium text-[var(--color-ink)] outline-none placeholder:text-[var(--color-placeholder)]" />
           </UnderlineField>
         ) : null}
 
@@ -226,7 +231,7 @@ export function OnboardingForm({
 
         {step === 3 ? (
           <UnderlineField label="Dia do mês">
-            <input value={payday} onChange={(event) => setPayday(event.target.value.replace(/\D/g, "").slice(0, 2))} inputMode="numeric" autoFocus placeholder="5" className="mt-1 w-full bg-transparent text-2xl font-medium text-[var(--color-ink)] outline-none placeholder:text-[#C7C7CC]" />
+            <input value={payday} onChange={(event) => setPayday(event.target.value.replace(/\D/g, "").slice(0, 2))} inputMode="numeric" autoFocus placeholder="5" className="mt-1 w-full bg-transparent text-2xl font-medium text-[var(--color-ink)] outline-none placeholder:text-[var(--color-placeholder)]" />
           </UnderlineField>
         ) : null}
 

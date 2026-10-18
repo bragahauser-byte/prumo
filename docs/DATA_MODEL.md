@@ -35,6 +35,9 @@ When Supabase is configured, `src/lib/finance/supabase-repository.ts` implements
 - `expenses.kind` and `recurring_rules.kind` are `'expense' | 'income'` (default `'expense'`). A trigger copies the rule's kind into generated occurrences. Status `paid` means "pago" for expenses and "recebido" for incomes.
 - `recurring_rules.interval_count` (1–12) supports "a cada N semanas/meses/anos"; local and SQL generators align occurrences to the start date.
 - `profiles.balance_reported_on` records when the balance was informed; settled movements from that date on adjust the displayed balance.
+- `profiles.avatar_data` holds the profile photo as a reduced JPEG data URL (256 px square, capped at 200 000 characters). `profiles.notification_settings` (jsonb) stores `alertsPush`, `insightsPush` and the scheduled reminders (`weeklyReview`, `monthlyBudget`, `billsAhead`), all reminders off by default. Older local data without these fields loads with the defaults.
+- Goal `icon` values: `travel`, `emergency`, `electronics`, `car`, `house`, `education`, `health`, `family`, `adventure`, `ticket`, `gift`, `other`. Earlier values (`computer`, `fitness`, `music`) are mapped when displayed.
+- Celebrated goals and seen/pushed notification ids live only in the browser (`localStorage`), so the celebration and each notification appear once per device.
 - `budgets` has one monthly limit per `(user_id, category)`.
 - `savings_goals` holds target, optional deadline and icon; `goal_contributions` holds `planned` or `done` contributions and cascades on goal deletion. Contributions never move money.
 - Local data saved before these fields existed is read with defaults (`kind = expense`, `interval = 1`, empty budgets and goals).

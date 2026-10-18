@@ -13,8 +13,8 @@ import { expensesByCategory, fixedVariableSplit, monthlySeries, percentChange, s
 import { currentMonth } from "@/lib/dates";
 import { formatCurrency, formatMonthKey } from "@/lib/formatting";
 
-const incomeColor = "#1E8E5A";
-const expenseColor = "#0066CC";
+const incomeColor = "#9FE870";
+const expenseColor = "#163300";
 
 function compactCurrency(cents: number, currency: string) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(cents / 100);
@@ -85,11 +85,11 @@ export function ReportsScreen() {
           <p className="text-sm text-[var(--color-muted)]">Gastos fixos e variáveis</p>
           <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-[var(--color-soft)]" role="img" aria-label={`Fixos ${formatCurrency(split.fixedCents, currency)}, variáveis ${formatCurrency(split.variableCents, currency)}`}>
             <div className="h-full bg-[var(--color-action)]" style={{ width: `${summary.expenseCents ? (split.fixedCents / summary.expenseCents) * 100 : 0}%` }} />
-            <div className="h-full border-l-2 border-white bg-[#7FB2E5]" style={{ width: `${summary.expenseCents ? (split.variableCents / summary.expenseCents) * 100 : 0}%` }} />
+            <div className="h-full border-l-2 border-white bg-[var(--color-accent)]" style={{ width: `${summary.expenseCents ? (split.variableCents / summary.expenseCents) * 100 : 0}%` }} />
           </div>
           <dl className="mt-4 space-y-1 text-sm">
             <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-[var(--color-muted)]"><span className="h-2.5 w-2.5 rounded-full bg-[var(--color-action)]" />Fixos (recorrentes)</dt><dd className="tabular font-medium">{formatCurrency(split.fixedCents, currency)}</dd></div>
-            <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-[var(--color-muted)]"><span className="h-2.5 w-2.5 rounded-full bg-[#7FB2E5]" />Variáveis</dt><dd className="tabular font-medium">{formatCurrency(split.variableCents, currency)}</dd></div>
+            <div className="flex items-center justify-between"><dt className="flex items-center gap-2 text-[var(--color-muted)]"><span className="h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" />Variáveis</dt><dd className="tabular font-medium">{formatCurrency(split.variableCents, currency)}</dd></div>
           </dl>
         </Card>
       </div>

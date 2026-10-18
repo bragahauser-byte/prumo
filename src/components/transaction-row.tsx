@@ -34,7 +34,7 @@ export function SettleButton({ transaction }: { transaction: FinanceExpense }) {
         disabled={isSaving}
         onClick={() => void settle()}
         aria-label={`${isIncome ? "Marcar como recebida" : "Marcar como paga"}: ${transaction.description}`}
-        className={`inline-flex min-h-9 items-center justify-center gap-1 rounded-full px-3 text-xs max-sm:w-9 max-sm:px-0 font-semibold transition-colors disabled:opacity-50 ${focusRing} ${isIncome ? "bg-[var(--color-success-soft)] text-[var(--color-success)] hover:bg-[#d6ecdf]" : "bg-[var(--color-action-soft)] text-[var(--color-action)] hover:bg-[#d7e7f8]"}`}
+        className={`inline-flex min-h-9 items-center justify-center gap-1 rounded-full px-3 text-xs max-sm:w-9 max-sm:px-0 font-semibold transition-colors disabled:opacity-50 ${focusRing} ${isIncome ? "bg-[var(--color-success-soft)] text-[var(--color-success)] hover:bg-[#cdeebb]" : "bg-[var(--color-action-soft)] text-[var(--color-action)] hover:bg-[#cdeebb]"}`}
       >
         <Check size={14} strokeWidth={2.5} aria-hidden="true" />
         <span className="hidden sm:inline">{isIncome ? "Recebi" : "Paguei"}</span>

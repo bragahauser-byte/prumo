@@ -79,7 +79,7 @@ export function MoneyInput({
             placeholder={placeholder}
             aria-describedby={hint ? `${id}-hint` : undefined}
             size={Math.max(1, (text || placeholder).length)}
-            className="tabular min-w-[1ch] max-w-[9ch] bg-transparent text-center text-4xl font-semibold text-[var(--color-text)] outline-none placeholder:text-[#C7C7CC]"
+            className="tabular min-w-[1ch] max-w-[9ch] bg-transparent text-center text-4xl font-semibold text-[var(--color-text)] outline-none placeholder:text-[var(--color-placeholder)]"
           />
         </div>
         {hint ? <p id={`${id}-hint`} className="mt-1 text-sm text-[var(--color-muted)]">{hint}</p> : null}
@@ -89,7 +89,7 @@ export function MoneyInput({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-semibold text-[#9A9AA0]">{label}</label>
+      <label htmlFor={id} className="block text-xs font-semibold text-[var(--color-tertiary)]">{label}</label>
       <div className="mt-1 flex items-baseline gap-2 border-b border-[var(--color-text)] pb-2 focus-within:border-[var(--color-action)]">
         <span className="text-xl font-medium text-[var(--color-muted)]">{symbol}</span>
         <input
@@ -101,7 +101,7 @@ export function MoneyInput({
           autoFocus={autoFocus}
           placeholder={placeholder}
           aria-describedby={hint ? `${id}-hint` : undefined}
-          className="tabular min-w-0 flex-1 bg-transparent text-xl font-medium text-[var(--color-text)] outline-none placeholder:text-[#C7C7CC]"
+          className="tabular min-w-0 flex-1 bg-transparent text-xl font-medium text-[var(--color-text)] outline-none placeholder:text-[var(--color-placeholder)]"
         />
       </div>
       {hint ? <p id={`${id}-hint`} className="mt-2 text-sm text-[var(--color-muted)]">{hint}</p> : null}

@@ -14,7 +14,8 @@ O Prumo não movimenta dinheiro. Ele organiza o que você registra para responde
 | 💸 | **Registro de receitas e despesas** | Valor digitado primeiro num teclado em tela cheia; depois descrição, categoria sugerida automaticamente, data, status e repetição. Busca, filtros, edição e exclusão. |
 | 🎯 | **Orçamentos por categoria** | Limite mensal por categoria, quanto resta e alertas ao chegar a 80% e ao passar do limite. |
 | 📅 | **Agenda: contas a pagar e a receber** | Atrasadas, próximos 7 dias e mais adiante; status previsto, pago, recebido ou atrasado; recorrências semanais, mensais, anuais ou personalizadas. |
-| 🐷 | **Metas** | Viagem, computador, reserva de emergência… valor-alvo, prazo, aportes feitos ou planejados e quanto guardar por mês. |
+| 🐷 | **Metas** | Doze tipos com ilustração 3D (viagem, reserva de emergência, carro, casa…), várias metas criadas de uma vez, anel dividido entre elas, barra com o ritmo esperado para hoje e uma comemoração quando a meta é atingida. |
+| 🔔 | **Notificações** | Alertas importantes (vencimentos, orçamento no limite, meta fora do ritmo), lembretes no horário que você escolher (desligados por padrão), até três insights e confirmações discretas na tela. |
 | 📊 | **Relatórios** | Evolução de seis meses, categorias que mais pesam, comparação entre meses, aumentos fora do comum e estimativa de sobra no fim do mês. |
 
 Detalhes e regras de cálculo em [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
@@ -22,9 +23,10 @@ Detalhes e regras de cálculo em [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
 ## Design
 
 - Escala tipográfica fixa: 12, 14, 16, 20, 24, 28 e 32 px.
-- Paleta em tokens (`src/app/globals.css`): azul para ação/gastos, verde para entradas e metas, laranja e vermelho só para alertas.
+- Paleta em tokens (`src/app/globals.css`): verde vivo e verde floresta como cores principais, secundárias para categorias e gráficos, tokens de conteúdo, interação, superfície, borda e sentimento.
 - Fluxo "valor primeiro" para todo momento em que se digita dinheiro.
-- Ícones de linha por categoria e espaço para ilustrações isométricas 3D (bnbicons.com) em `public/illustrations`.
+- Ícones de linha por categoria e ilustrações isométricas 3D (bnbicons.com) em `public/illustrations` e `public/goal-icons`.
+- Cabeçalho com título e subtítulo em 24 px; no celular, 64 px do topo e barra de navegação a 40 px da borda inferior.
 
 Mais em [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md).
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   createLocalFinanceRepository,
+  defaultNotificationSettings,
   type FinanceExpense,
   type FinancePreferences,
   type FinanceRecurringRule,
@@ -24,6 +25,8 @@ describe("local finance repository", () => {
       termsAccepted: true,
       notificationsEnabled: false,
       onboardingCompleted: true,
+      avatarDataUrl: "data:image/jpeg;base64,AAAA",
+      notificationSettings: defaultNotificationSettings,
     };
     await first.savePreferences(preferences);
 
@@ -143,5 +146,18 @@ describe("local finance repository", () => {
     expect((await createLocalFinanceRepository().load()).savingsGoals[0].contributions).toHaveLength(1);
     await repository.deleteSavingsGoal("goal");
     expect((await repository.load()).savingsGoals).toEqual([]);
+  });
+
+  it("reads preferences saved before profile photos and reminders existed, with everything off", async () => {
+    localStorage.setItem("personal-finance:data:v1", JSON.stringify({
+      preferences: { displayName: "Bia", monthlyIncomeCents: null, reportedBalanceCents: null, payday: null, currency: "BRL", goals: [], termsAccepted: true, notificationsEnabled: false, onboardingCompleted: true },
+      expenses: [],
+      recurringRules: [],
+    }));
+    const { preferences } = await createLocalFinanceRepository().load();
+    expect(preferences?.avatarDataUrl).toBeNull();
+    expect(preferences?.notificationSettings.reminders.weeklyReview.enabled).toBe(false);
+    expect(preferences?.notificationSettings.reminders.monthlyBudget.enabled).toBe(false);
+    expect(preferences?.notificationSettings.reminders.billsAhead.enabled).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, CalendarDays, Check, Clock3, History, Repeat, Search, Tag, X } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { useFinanceSummary } from "@/components/use-finance-summary";
 import { CategoryIcon, GoalIcon } from "@/components/ui/category-icon";
 import { Confetti } from "@/components/ui/confetti";
@@ -175,19 +176,19 @@ export function AddFlow() {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center bg-black/40 lg:items-center lg:p-6">
-      <div className={`relative flex w-full flex-col overflow-hidden text-white transition-colors duration-300 lg:h-[min(840px,calc(100dvh-48px))] lg:max-w-[420px] lg:rounded-[40px] lg:shadow-[0_24px_80px_rgba(0,0,0,0.3)] ${sheetOpen ? "bg-[#00468C]" : "bg-[var(--color-action)]"}`}>
+      <div className={`relative flex w-full flex-col overflow-hidden text-[#163300] transition-colors duration-300 lg:h-[min(840px,calc(100dvh-48px))] lg:max-w-[420px] lg:rounded-[40px] lg:shadow-[0_24px_80px_rgba(0,0,0,0.3)] ${sheetOpen ? "bg-[var(--color-accent-deep)]" : "bg-[var(--color-accent)]"}`}>
         <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),16px)]">
-          <button type="button" onClick={close} aria-label="Fechar" className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white">
+          <button type="button" onClick={close} aria-label="Fechar" className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-[#163300]/10 focus-visible:outline-2 focus-visible:outline-[#163300]">
             <X size={24} aria-hidden="true" />
           </button>
-          <Link href="/settings" aria-label="Perfil e ajustes" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 text-base font-semibold focus-visible:outline-2 focus-visible:outline-white">
-            {preferences?.displayName?.trim().charAt(0).toLocaleUpperCase("pt-BR") || "P"}
+          <Link href="/settings" aria-label="Perfil e ajustes" className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#163300]">
+            <ProfileAvatar name={preferences?.displayName} photo={preferences?.avatarDataUrl} inverse />
           </Link>
         </div>
 
         <div className={`flex flex-col items-center justify-center px-6 text-center ${sheetOpen ? "pt-6" : "pb-8 pt-12"}`}>
           <AmountDisplay value={sheetOpen ? String(amountCents / 100).replace(".", ",") : keypad.value} currency={currency} feedback={sheetOpen ? null : keypad.feedback} bumpKey={sheetOpen ? 0 : keypad.bumpKey} className={!sheetOpen && !keypad.value ? "opacity-60" : ""} />
-          {!sheetOpen && fixedGoal ? <p className="mt-4 text-sm text-white/85">Guardar em {fixedGoal.name}</p> : null}
+          {!sheetOpen && fixedGoal ? <p className="mt-4 text-sm text-[#163300]/80">Guardar em {fixedGoal.name}</p> : null}
         </div>
 
         {!sheetOpen ? (
@@ -195,23 +196,23 @@ export function AddFlow() {
             <div className="flex min-h-0 flex-1 flex-col justify-center px-4"><KeypadGrid onPress={keypad.press} decimals={keypad.decimals} /></div>
             <div className="space-y-2 px-4 pt-4">
               {fixedGoal ? (
-                <button type="button" onClick={() => choose("goal")} className="min-h-12 w-full rounded-full bg-black/15 text-base font-semibold transition-colors hover:bg-black/20 focus-visible:outline-2 focus-visible:outline-white">Guardar</button>
+                <button type="button" onClick={() => choose("goal")} className="min-h-12 w-full rounded-full bg-[#163300]/10 text-base font-semibold transition-colors hover:bg-[#163300]/15 focus-visible:outline-2 focus-visible:outline-[#163300]">Guardar</button>
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => choose("income")} className="min-h-12 rounded-full bg-black/15 text-base font-semibold transition-colors hover:bg-black/20 focus-visible:outline-2 focus-visible:outline-white">Receita</button>
-                    <button type="button" onClick={() => choose("goal")} className="min-h-12 rounded-full bg-black/15 text-base font-semibold transition-colors hover:bg-black/20 focus-visible:outline-2 focus-visible:outline-white">Guardar</button>
+                    <button type="button" onClick={() => choose("income")} className="min-h-12 rounded-full bg-[#163300]/10 text-base font-semibold transition-colors hover:bg-[#163300]/15 focus-visible:outline-2 focus-visible:outline-[#163300]">Receita</button>
+                    <button type="button" onClick={() => choose("goal")} className="min-h-12 rounded-full bg-[#163300]/10 text-base font-semibold transition-colors hover:bg-[#163300]/15 focus-visible:outline-2 focus-visible:outline-[#163300]">Guardar</button>
                   </div>
-                  <button type="button" onClick={() => choose("expense")} className="min-h-12 w-full rounded-full bg-black/15 text-base font-semibold transition-colors hover:bg-black/20 focus-visible:outline-2 focus-visible:outline-white">Gasto</button>
+                  <button type="button" onClick={() => choose("expense")} className="min-h-12 w-full rounded-full bg-[#163300]/10 text-base font-semibold transition-colors hover:bg-[#163300]/15 focus-visible:outline-2 focus-visible:outline-[#163300]">Gasto</button>
                 </>
               )}
             </div>
             <nav aria-label="Atalhos" className="flex items-center justify-around px-6 pb-[max(env(safe-area-inset-bottom),16px)] pt-4">
-              <Link href="/overview" className="tabular min-w-16 text-center text-base font-semibold text-white/70 hover:text-white" aria-label={`Início, ainda pode gastar ${formatCurrency(Math.max(0, spendable?.amountCents ?? balanceCents ?? 0), currency)}`}>
+              <Link href="/overview" className="tabular min-w-16 text-center text-base font-semibold text-[#163300]/70 hover:text-[#163300]" aria-label={`Início, ainda pode gastar ${formatCurrency(Math.max(0, spendable?.amountCents ?? balanceCents ?? 0), currency)}`}>
                 {formatCurrencyCompact(Math.max(0, spendable?.amountCents ?? balanceCents ?? 0), currency)}
               </Link>
-              <span className="flex h-12 w-16 items-center justify-center rounded-full bg-black/15 text-xl font-semibold" aria-current="page" aria-label="Registrar">{currencySymbol(currency)}</span>
-              <Link href="/transactions" aria-label="Extrato" className="flex min-w-16 justify-center text-white/70 hover:text-white"><History size={24} aria-hidden="true" /></Link>
+              <span className="flex h-12 w-16 items-center justify-center rounded-full bg-[#163300]/10 text-xl font-semibold" aria-current="page" aria-label="Registrar">{currencySymbol(currency)}</span>
+              <Link href="/transactions" aria-label="Extrato" className="flex min-w-16 justify-center text-[#163300]/70 hover:text-[#163300]"><History size={24} aria-hidden="true" /></Link>
             </nav>
           </>
         ) : (
@@ -221,7 +222,7 @@ export function AddFlow() {
             aria-labelledby="add-sheet-title"
             className="animate-sheet-in absolute inset-x-0 bottom-0 top-[30%] flex flex-col rounded-t-[28px] bg-white text-[var(--color-text)] shadow-[0_-8px_40px_rgba(0,0,0,0.18)] lg:rounded-b-[40px]"
           >
-            <span className="mx-auto mt-2 h-1 w-9 rounded-full bg-[#C7C7CC]" aria-hidden="true" />
+            <span className="mx-auto mt-2 h-1 w-9 rounded-full bg-[var(--color-placeholder)]" aria-hidden="true" />
             <div className="px-6 pt-3">
               <button
                 type="button"

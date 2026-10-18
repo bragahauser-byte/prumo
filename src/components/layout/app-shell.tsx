@@ -17,34 +17,29 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useFinance } from "@/components/finance-provider";
+import { GoalCelebrationWatcher } from "@/components/goal-celebration";
+import { NotificationBell, NotificationsProvider } from "@/components/notifications";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { ToastProvider } from "@/components/ui/toast";
 import { focusRing } from "@/components/ui/primitives";
 import { asset } from "@/lib/base-path";
 
-type NavigationItem = { href: string; label: string; mobileLabel?: string; title?: string; icon: LucideIcon; mobile?: boolean };
+type NavigationItem = { href: string; label: string; mobileLabel?: string; title?: string; subtitle: string; icon: LucideIcon; mobile?: boolean };
 
 const navigation: NavigationItem[] = [
-  { href: "/overview", label: "Início", icon: Home, mobile: true },
-  { href: "/transactions", label: "Transações", mobileLabel: "Extrato", icon: ArrowLeftRight, mobile: true },
-  { href: "/bills", label: "Agenda", title: "Agenda", icon: CalendarClock },
-  { href: "/budgets", label: "Orçamentos", icon: Target },
-  { href: "/goals", label: "Metas", icon: PiggyBank, mobile: true },
-  { href: "/reports", label: "Relatórios", icon: BarChart3, mobile: true },
-  { href: "/settings", label: "Ajustes", title: "Perfil e ajustes", icon: Settings },
+  { href: "/overview", label: "Início", subtitle: "Seu mês em dia", icon: Home, mobile: true },
+  { href: "/transactions", label: "Transações", mobileLabel: "Extrato", subtitle: "Entradas e saídas", icon: ArrowLeftRight, mobile: true },
+  { href: "/bills", label: "Agenda", title: "Agenda", subtitle: "Contas do mês", icon: CalendarClock },
+  { href: "/budgets", label: "Orçamentos", subtitle: "Limites do mês", icon: Target },
+  { href: "/goals", label: "Metas", subtitle: "Seus objetivos", icon: PiggyBank, mobile: true },
+  { href: "/reports", label: "Relatórios", subtitle: "Como foi o mês", icon: BarChart3, mobile: true },
+  { href: "/settings", label: "Ajustes", title: "Perfil e ajustes", subtitle: "Sua conta", icon: Settings },
 ];
 
 const mobileNavigation = navigation.filter((item) => item.mobile);
 
 function isActiveRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function Avatar({ name }: { name: string | null }) {
-  const initial = name?.trim().charAt(0).toLocaleUpperCase("pt-BR");
-  return (
-    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[linear-gradient(145deg,#dfe9f5,#c9d8ea)] text-base font-semibold text-[var(--color-action)]">
-      {initial || <Settings size={20} aria-hidden="true" />}
-    </span>
-  );
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -56,6 +51,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isFullScreen = pathname.startsWith("/add") || pathname.startsWith("/goals/new");
   const activeItem = navigation.find((item) => isActiveRoute(pathname, item.href));
   const pageTitle = activeItem?.title ?? activeItem?.label ?? "Prumo";
+  const firstName = preferences?.displayName?.trim().split(/\s+/)[0];
+  const pageSubtitle = activeItem?.href === "/overview" && firstName ? `Olá, ${firstName}` : activeItem?.subtitle ?? "";
   const onboardingComplete = preferences?.onboardingCompleted === true;
 
   useEffect(() => {
@@ -84,23 +81,26 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (isOnboarding) {
     return (
-      <div className="min-h-dvh bg-white">
-        <div className="mx-auto flex min-h-dvh w-full max-w-[393px] flex-col"><main>{children}</main></div>
-      </div>
+      <Providers>
+        <div className="min-h-dvh bg-white">
+          <div className="mx-auto flex min-h-dvh w-full max-w-[393px] flex-col"><main>{children}</main></div>
+        </div>
+      </Providers>
     );
   }
 
-  if (isFullScreen) return <main>{children}</main>;
+  if (isFullScreen) return <Providers><main>{children}</main></Providers>;
 
   return (
+    <Providers>
     <div className="min-h-dvh bg-white text-[var(--color-text)]">
-      <div className="mx-auto flex min-h-dvh max-w-[1280px] gap-10 px-4 pb-[calc(116px+env(safe-area-inset-bottom))] pt-[max(env(safe-area-inset-top),20px)] sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
+      <div className="mx-auto flex min-h-dvh max-w-[1280px] gap-10 px-4 pb-[calc(148px+env(safe-area-inset-bottom))] pt-[max(env(safe-area-inset-top),64px)] sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
         <aside className="sticky top-10 hidden h-[calc(100dvh-5rem)] w-60 shrink-0 flex-col border-r border-[var(--color-border)] pr-6 lg:flex">
           <Link href="/overview" className={`mb-8 flex items-center gap-3 rounded-2xl px-3 py-1 ${focusRing}`}>
             <Image src={asset("/app-icon.png")} alt="" width={36} height={36} className="rounded-[10px]" />
             <span className="text-xl font-semibold">Prumo</span>
           </Link>
-          <Link href="/add" className={`mb-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-action)] px-5 text-base font-semibold text-white transition-colors hover:bg-[var(--color-action-pressed)] ${focusRing}`}>
+          <Link href="/add" className={`mb-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-5 text-base font-semibold text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-pressed)] ${focusRing}`}>
             <Plus size={20} aria-hidden="true" /> Novo registro
           </Link>
           <nav aria-label="Navegação principal" className="space-y-1">
@@ -123,27 +123,45 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="mb-6 flex min-h-14 items-center justify-between gap-4">
-            <h1 className="text-3xl font-semibold tracking-[-0.01em]">{pageTitle}</h1>
-            <Link href="/settings" aria-label="Perfil e ajustes" className={`rounded-full ${focusRing}`}>
-              <Avatar name={preferences?.displayName ?? null} />
-            </Link>
+          <header className="mb-6 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-2xl font-semibold leading-[30px] tracking-[-0.01em] text-[var(--color-text)]">{pageTitle}</h1>
+              {pageSubtitle ? <p className="truncate text-2xl font-normal leading-[30px] tracking-[-0.01em] text-[var(--color-tertiary)]">{pageSubtitle}</p> : null}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <NotificationBell />
+              <Link href="/settings" aria-label="Perfil e ajustes" className={`rounded-full ${focusRing}`}>
+                <ProfileAvatar name={preferences?.displayName} photo={preferences?.avatarDataUrl} />
+              </Link>
+            </div>
           </header>
 
           <main className="max-w-[1040px]">{children}</main>
         </div>
       </div>
 
-      <nav aria-label="Navegação principal" className="fixed inset-x-3 bottom-0 z-30 mx-auto max-w-[440px] pb-[max(env(safe-area-inset-bottom),8px)] pt-2 lg:hidden">
-        <div className="flex h-[68px] items-center gap-1 rounded-full border border-white/80 bg-[var(--color-nav-glass)] p-1.5 shadow-[0_8px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+      <nav aria-label="Navegação principal" className="fixed inset-x-4 bottom-[max(40px,env(safe-area-inset-bottom))] z-30 mx-auto max-w-[440px] lg:hidden">
+        <div className="flex h-[68px] items-center gap-1 rounded-full border border-white/80 bg-[var(--color-nav-glass)] p-1.5 shadow-[0_8px_40px_rgba(14,15,12,0.14)] backdrop-blur-xl">
           {mobileNavigation.slice(0, 2).map((item) => <MobileNavLink key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
-          <Link href="/add" aria-label="Adicionar registro" className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-action)] text-white shadow-[0_6px_20px_rgba(0,102,204,0.35)] transition-transform active:scale-95 ${focusRing}`}>
+          <Link href="/add" aria-label="Adicionar registro" className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] shadow-[0_6px_20px_rgba(22,51,0,0.28)] transition-transform active:scale-95 ${focusRing}`}>
             <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
           </Link>
           {mobileNavigation.slice(2).map((item) => <MobileNavLink key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}
         </div>
       </nav>
     </div>
+    </Providers>
+  );
+}
+
+function Providers({ children }: { children: ReactNode }) {
+  return (
+    <ToastProvider>
+      <NotificationsProvider>
+        {children}
+        <GoalCelebrationWatcher />
+      </NotificationsProvider>
+    </ToastProvider>
   );
 }
 
@@ -153,7 +171,7 @@ function MobileNavLink({ item, active }: { item: NavigationItem; active: boolean
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-action)] ${active ? "bg-[var(--color-nav-selection)] text-[var(--color-action)]" : "text-[var(--color-text)] hover:bg-black/[0.04]"}`}
+      className={`flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-action)] ${active ? "bg-[var(--color-nav-selection)] text-[var(--color-forest-green)]" : "text-[var(--color-muted)] hover:bg-black/[0.04]"}`}
     >
       <Icon size={20} strokeWidth={active ? 2.25 : 2} aria-hidden="true" />
       <span className="w-full truncate text-xs font-semibold leading-4">{item.mobileLabel ?? item.label}</span>

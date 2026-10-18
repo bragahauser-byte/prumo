@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function TermsPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-2xl px-6 pt-16 pb-10">
-      <Link href="/onboarding" className="inline-flex h-11 items-center gap-2 rounded-full bg-[#F1F1F1] px-4 text-sm font-medium text-black">
+      <Link href="/onboarding" className="inline-flex h-11 items-center gap-2 rounded-full bg-[var(--color-soft)] px-4 text-sm font-medium text-black">
         Voltar ao onboarding
       </Link>
       <h1 className="mt-8 text-3xl font-semibold">Termos de uso</h1>

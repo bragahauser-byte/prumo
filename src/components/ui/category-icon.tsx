@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   Banknote,
   Laptop,
@@ -30,17 +31,32 @@ const categoryIcons: Record<string, IconSource> = {
   "Outras receitas": { lucide: Banknote },
 };
 
-export const goalIcons: { value: string; label: string; svg: string }[] = [
-  { value: "travel", label: "Viagem", svg: "beach" },
-  { value: "emergency", label: "Reserva de emergência", svg: "emergency" },
-  { value: "computer", label: "Computador", svg: "workspace" },
-  { value: "house", label: "Casa", svg: "house" },
-  { value: "car", label: "Carro", svg: "car" },
-  { value: "adventure", label: "Aventura", svg: "tent" },
-  { value: "fitness", label: "Saúde e bem-estar", svg: "gym" },
-  { value: "music", label: "Música", svg: "piano" },
-  { value: "other", label: "Outro objetivo", svg: "box" },
+/**
+ * Categorias de meta com ilustração 3D própria (public/goals), na ordem em que as pessoas
+ * costumam criar metas: objetivos amplos e recorrentes primeiro, específicos depois.
+ */
+export const goalIcons: { value: string; label: string }[] = [
+  { value: "travel", label: "Viagem" },
+  { value: "emergency", label: "Reserva de emergência" },
+  { value: "electronics", label: "Eletrônicos" },
+  { value: "car", label: "Carro" },
+  { value: "house", label: "Casa" },
+  { value: "education", label: "Educação" },
+  { value: "health", label: "Saúde e bem-estar" },
+  { value: "family", label: "Casamento e família" },
+  { value: "adventure", label: "Aventura" },
+  { value: "ticket", label: "Ingresso" },
+  { value: "gift", label: "Presente" },
+  { value: "other", label: "Outros objetivos" },
 ];
+
+/** Valores usados antes das ilustrações 3D, mantidos para metas já salvas. */
+const legacyGoalIcons: Record<string, string> = { computer: "electronics", fitness: "health", music: "ticket" };
+
+export function goalIconFor(icon: string) {
+  const value = legacyGoalIcons[icon] ?? icon;
+  return goalIcons.find((item) => item.value === value) ?? goalIcons[goalIcons.length - 1];
+}
 
 /** Ícone de linha (SVG em /public/icons) aplicado como máscara para herdar a cor do texto. */
 export function MaskIcon({ name, size = 24, className = "" }: { name: string; size?: number; className?: string }) {
@@ -92,12 +108,18 @@ export function CategoryIcon({
   );
 }
 
-export function GoalIcon({ icon, size = 44 }: { icon: string; size?: number }) {
-  const source = goalIcons.find((item) => item.value === icon) ?? goalIcons[goalIcons.length - 1];
+export function GoalIcon({ icon, size = 44, className = "" }: { icon: string; size?: number; className?: string }) {
+  const source = goalIconFor(icon);
   return (
-    <span className="flex shrink-0 items-center justify-center rounded-full bg-[var(--color-action-soft)] text-[var(--color-action)]" style={{ width: size, height: size }}>
-      <MaskIcon name={source.svg} size={Math.round(size * 0.68)} />
-    </span>
+    <Image
+      src={asset(`/goal-icons/${source.value}.png`)}
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      draggable={false}
+      className={`shrink-0 select-none object-contain ${className}`}
+      style={{ width: size, height: size }}
+    />
   );
 }
-

@@ -3,11 +3,11 @@ import { ChevronRight } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
 export const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-action)]";
-export const primaryButton = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--color-action)] px-6 text-base font-semibold text-white transition-colors hover:bg-[var(--color-action-pressed)] disabled:opacity-50 ${focusRing}`;
-export const inkButton = `inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] px-6 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:bg-[#A6A6A6] disabled:opacity-100 ${focusRing}`;
+export const primaryButton = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-6 text-base font-semibold text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-pressed)] disabled:opacity-50 ${focusRing}`;
+export const inkButton = `inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-6 text-base font-semibold text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-pressed)] disabled:bg-[var(--color-soft)] disabled:text-[var(--color-placeholder)] disabled:opacity-100 ${focusRing}`;
 export const outlineButton = `inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-[var(--color-ink)] bg-white px-6 text-base font-semibold text-[var(--color-ink)] transition-colors hover:bg-[var(--color-soft)] disabled:opacity-50 ${focusRing}`;
 export const softButton = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--color-soft)] px-6 text-base font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-border)] disabled:opacity-50 ${focusRing}`;
-export const textButton = `inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-[var(--color-action)] transition-colors hover:bg-[var(--color-action-soft)] disabled:opacity-50 ${focusRing}`;
+export const textButton = `inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-[var(--color-link)] underline-offset-4 transition-colors hover:bg-[var(--color-soft)] disabled:opacity-50 ${focusRing}`;
 export const dangerButton = `inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-[var(--color-error)] transition-colors hover:bg-[var(--color-error-soft)] disabled:opacity-50 ${focusRing}`;
 export const fieldClass = "mt-2 min-h-12 w-full rounded-xl border border-[var(--color-border)] bg-white px-4 text-base outline-none transition-colors focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--color-action-soft)] disabled:opacity-50";
 export const labelClass = "block text-sm font-medium text-[var(--color-text)]";
@@ -91,7 +91,7 @@ export function Segmented<T extends string>({
 
 export function Meter({ value, level = "ok", label }: { value: number; level?: "ok" | "warning" | "over"; label: string }) {
   const percent = Math.round(Math.max(0, Math.min(1, value)) * 100);
-  const color = level === "over" ? "bg-[var(--color-error)]" : level === "warning" ? "bg-[var(--color-warning)]" : "bg-[var(--color-action)]";
+  const color = level === "over" ? "bg-[var(--color-error)]" : level === "warning" ? "bg-[var(--color-warning-fill)]" : "bg-[var(--color-action)]";
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-soft)]" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
       <div className={`h-full rounded-full transition-[width] duration-500 ${color}`} style={{ width: `${percent}%` }} />

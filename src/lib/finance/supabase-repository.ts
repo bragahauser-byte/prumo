@@ -14,6 +14,12 @@ import type {
   FinanceSavingsGoal,
   FinanceSnapshot,
 } from "./repository";
+import { defaultNotificationSettings, notificationSettingsSchema } from "./repository";
+
+function parseNotificationSettings(value: unknown) {
+  const result = notificationSettingsSchema.safeParse(value);
+  return result.success ? result.data : defaultNotificationSettings;
+}
 
 function amountToCents(value: string | number) {
   const cents = parseCurrencyToCents(String(value), true);
@@ -49,7 +55,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
     async load(): Promise<FinanceSnapshot> {
       const ownerId = await requireUserId();
       const [profileResult, expenseResult, ruleResult, budgetResult, goalResult, contributionResult] = await Promise.all([
-        client.from("profiles").select("display_name, monthly_income, reported_balance, balance_reported_on, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed").eq("user_id", ownerId).maybeSingle(),
+        client.from("profiles").select("display_name, monthly_income, reported_balance, balance_reported_on, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed, avatar_data, notification_settings").eq("user_id", ownerId).maybeSingle(),
         client.from("expenses").select("id, kind, description, amount, category, due_date, status, paid_on, notes, recurring_rule_id, occurrence_date").order("due_date", { ascending: true }),
         client.from("recurring_rules").select("id, kind, name, amount, category, frequency, interval_count, starts_on, due_day, ends_on, is_active, is_variable, notes").order("created_at", { ascending: false }),
         client.from("budgets").select("category, limit_amount").order("category"),
@@ -76,6 +82,8 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         termsAccepted: profileResult.data.terms_accepted_at !== null,
         notificationsEnabled: profileResult.data.notifications_enabled,
         onboardingCompleted: profileResult.data.onboarding_completed,
+        avatarDataUrl: profileResult.data.avatar_data ?? null,
+        notificationSettings: parseNotificationSettings(profileResult.data.notification_settings),
       } : null;
 
       return {
@@ -143,6 +151,8 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         terms_accepted_at: preferences.termsAccepted ? new Date().toISOString() : null,
         notifications_enabled: preferences.notificationsEnabled,
         onboarding_completed: preferences.onboardingCompleted,
+        avatar_data: preferences.avatarDataUrl,
+        notification_settings: preferences.notificationSettings,
       }).eq("user_id", ownerId).select("user_id").maybeSingle();
       throwOnError(error);
       if (!data) throw new Error("Não foi possível salvar as preferências da conta.");

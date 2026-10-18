@@ -15,7 +15,7 @@ export function EmptyState({
       aria-labelledby="empty-state-title"
     >
       <div className="flex max-w-[302px] flex-col items-center">
-        <h2 id="empty-state-title" className="text-xl font-semibold leading-[26px] text-[#54545a]">
+        <h2 id="empty-state-title" className="text-xl font-semibold leading-[26px] text-[var(--color-muted)]">
           {title}
         </h2>
         <p className="mt-1 text-sm leading-5 text-[var(--color-muted)]">{description}</p>

@@ -59,7 +59,6 @@ export function OverviewScreen() {
 
   return (
     <div className="space-y-4">
-      {preferences?.displayName ? <p className="-mt-3 text-base text-[var(--color-muted)]">Olá, {preferences.displayName}</p> : null}
 
       <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
         <Card aria-labelledby="balance-title">

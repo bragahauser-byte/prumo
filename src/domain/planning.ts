@@ -216,3 +216,26 @@ export function percentChange(current: number, previous: number) {
   if (previous === 0) return null;
   return Math.round(((current - previous) / previous) * 100);
 }
+
+function dayNumber(date: string) {
+  return Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))) / 86_400_000;
+}
+
+export type GoalPaceStatus = "complete" | "ahead" | "on_track" | "behind" | "overdue" | "no_deadline";
+
+/**
+ * Ritmo da meta: compara o que já foi guardado com o esperado para hoje,
+ * supondo aportes iguais entre a criação e o prazo (sem juros nem rendimento).
+ */
+export function goalPace(goal: GoalLike & { createdOn: string }, today: string) {
+  const progress = goalProgress(goal, today);
+  if (progress.isComplete) return { status: "complete" as GoalPaceStatus, expectedRatio: 1, progress };
+  if (!goal.deadline) return { status: "no_deadline" as GoalPaceStatus, expectedRatio: null, progress };
+  if (goal.deadline < today) return { status: "overdue" as GoalPaceStatus, expectedRatio: 1, progress };
+  const total = dayNumber(goal.deadline) - dayNumber(goal.createdOn);
+  const elapsed = dayNumber(today) - dayNumber(goal.createdOn);
+  const expectedRatio = total > 0 ? Math.max(0, Math.min(1, elapsed / total)) : 1;
+  const tolerance = 0.05;
+  const status: GoalPaceStatus = progress.ratio + tolerance < expectedRatio ? "behind" : progress.ratio > expectedRatio + tolerance ? "ahead" : "on_track";
+  return { status, expectedRatio, progress };
+}

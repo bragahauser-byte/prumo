@@ -9,6 +9,7 @@ import { Illustration } from "@/components/ui/illustration";
 import { MoneyKeypad } from "@/components/ui/money-keypad";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Card, Meter, SectionHeader, dangerButton, focusRing, textButton } from "@/components/ui/primitives";
+import { useToast } from "@/components/ui/toast";
 import { expenseCategories } from "@/domain/categories";
 import { expensesByCategory, shiftMonth } from "@/domain/planning";
 import { currentMonth } from "@/lib/dates";
@@ -19,6 +20,7 @@ export function BudgetsScreen() {
   const [month, setMonth] = useState(currentMonth());
   const { currency, budgets } = useFinanceSummary(month);
   const [editing, setEditing] = useState<string | null>(null);
+  const toast = useToast();
   const [message, setMessage] = useState<{ text: string; failed: boolean } | null>(null);
 
   const spentByCategory = new Map(expensesByCategory(expenses, month).map((item) => [item.category, item.amountCents]));
@@ -39,7 +41,7 @@ export function BudgetsScreen() {
     try {
       await saveBudget({ category, limitCents: cents });
       setEditing(null);
-      setMessage({ text: `Limite de ${category} salvo: ${formatCurrency(cents, currency)} por mês.`, failed: false });
+      toast(`Limite de ${category} salvo: ${formatCurrency(cents, currency)} por mês.`);
     } catch {
       setMessage({ text: "Não foi possível salvar o limite.", failed: true });
     }
@@ -49,7 +51,7 @@ export function BudgetsScreen() {
     setMessage(null);
     try {
       await deleteBudget(category);
-      setMessage({ text: `Limite de ${category} removido.`, failed: false });
+      toast(`Limite de ${category} removido.`);
     } catch {
       setMessage({ text: "Não foi possível remover o limite.", failed: true });
     }
