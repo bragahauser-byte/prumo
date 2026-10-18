@@ -44,7 +44,7 @@ yarn-error.log*
 next-env.d.ts
 
 # material de referência local (não versionado)
-/inspiracao de telas/
+/inspiracao*/
 /iconography app/
 /icon app/
 /3d style icons/

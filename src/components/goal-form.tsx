@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useFinance } from "@/components/finance-provider";
 import { GoalIcon, goalIcons } from "@/components/ui/category-icon";
-import { MoneyKeypad } from "@/components/ui/money-keypad";
+import { MoneyInput } from "@/components/ui/money-input";
 import { fieldClass, focusRing, labelClass, primaryButton, softButton } from "@/components/ui/primitives";
 import { goalProgress } from "@/domain/planning";
 import { todayISO } from "@/lib/dates";
@@ -27,7 +27,6 @@ export function GoalForm({
   const [icon, setIcon] = useState(goal?.icon ?? "travel");
   const [targetCents, setTargetCents] = useState(goal?.targetCents ?? 0);
   const [deadline, setDeadline] = useState(goal?.deadline ?? "");
-  const [editingAmount, setEditingAmount] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const preview = targetCents ? goalProgress({ targetCents, deadline: deadline || null, contributions: goal?.contributions ?? [] }, today) : null;
 
@@ -78,13 +77,7 @@ export function GoalForm({
         </div>
       </fieldset>
       <label className={labelClass}>Nome da meta<input value={name} onChange={(event) => setName(event.target.value)} maxLength={80} placeholder="Ex.: Viagem para o Chile" className={fieldClass} /></label>
-      <div>
-        <span className="text-sm font-medium">Quanto você quer juntar?</span>
-        <button type="button" onClick={() => setEditingAmount(true)} className={`mt-2 flex min-h-12 w-full items-center justify-between rounded-2xl border border-[var(--color-border)] px-4 text-left ${focusRing}`}>
-          <span className={`tabular text-base font-semibold ${targetCents ? "" : "text-[var(--color-muted)]"}`}>{formatCurrency(targetCents, currency)}</span>
-          <span className="text-sm font-semibold text-[var(--color-action)]">{targetCents ? "Alterar" : "Digitar"}</span>
-        </button>
-      </div>
+      <MoneyInput label="Valor da meta" value={targetCents || null} onChange={(cents) => setTargetCents(cents ?? 0)} currency={currency} />
       <label className={labelClass}>Prazo (opcional)<input type="date" min={today} value={deadline} onChange={(event) => setDeadline(event.target.value)} className={fieldClass} /></label>
       {preview?.monthlyNeededCents ? (
         <p className="rounded-2xl bg-[var(--color-action-soft)] px-4 py-3 text-sm text-[var(--color-action)]" role="status">
@@ -96,9 +89,6 @@ export function GoalForm({
         <button type="button" onClick={onCancel} className={softButton}>Cancelar</button>
         <button disabled={isSaving} className={primaryButton}>{isSaving ? "Salvando..." : goal ? "Salvar" : "Criar meta"}</button>
       </div>
-      {editingAmount ? (
-        <MoneyKeypad title={name.trim() || "Valor da meta"} currency={currency} tone="success" initialCents={targetCents || null} submitLabel="Confirmar" closeVariant="back" onSubmit={(cents) => { setTargetCents(cents); setEditingAmount(false); }} onClose={() => setEditingAmount(false)} />
-      ) : null}
     </form>
   );
 }

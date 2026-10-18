@@ -131,22 +131,22 @@ export function OverviewScreen() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <TileLink href="/goals" title="Metas">
-          <Illustration name="piggy-bank" size={64} className="mt-4" />
+          <Illustration name="goals" size={88} className="-ml-1 mt-3" />
           <span className="tabular mt-4 text-xl font-semibold">{formatCurrency(savedCents, currency)}</span>
           <span className="mt-0.5 text-sm text-[var(--color-muted)]">{savingsGoals.length ? `guardados em ${savingsGoals.length} ${savingsGoals.length === 1 ? "meta" : "metas"}` : "Guarde para um objetivo"}</span>
         </TileLink>
         <TileLink href="/budgets" title="Orçamentos">
-          <Illustration name="jar" size={64} className="mt-4" />
+          <Illustration name="budgets" size={88} className="-ml-1 mt-3" />
           <span className={`mt-4 text-xl font-semibold ${budgetsAtRisk ? "text-[var(--color-warning)]" : ""}`}>{budgets.length ? budgetsAtRisk ? `${budgetsAtRisk} em alerta` : "Tudo em dia" : "Sem limites"}</span>
           <span className="mt-0.5 text-sm text-[var(--color-muted)]">{budgets.length ? `de ${budgets.length} ${budgets.length === 1 ? "categoria com limite" : "categorias com limite"}` : "Defina quanto gastar"}</span>
         </TileLink>
         <TileLink href="/bills" title="Agenda">
-          <Illustration name="calendar" size={64} className="mt-4" />
+          <Illustration name="bills" size={88} className="-ml-1 mt-3" />
           <span className="mt-4 truncate text-xl font-semibold">{nextBill ? formatShortDate(nextBill.date) : "Em dia"}</span>
           <span className="mt-0.5 truncate text-sm text-[var(--color-muted)]">{nextBill ? `${nextBill.description} · ${formatCurrency(nextBill.amountCents, currency)}` : "Nenhuma conta a pagar"}</span>
         </TileLink>
         <TileLink href="/reports" title="Relatórios">
-          <Illustration name="chart" size={64} className="mt-4" />
+          <Illustration name="reports" size={88} className="-ml-1 mt-3" />
           <span className={`tabular mt-4 text-xl font-semibold ${projectionCents !== null && projectionCents < 0 ? "text-[var(--color-error)]" : ""}`}>{projectionCents === null ? "—" : formatCurrency(projectionCents, currency)}</span>
           <span className="mt-0.5 text-sm text-[var(--color-muted)]">sobra estimada no fim do mês</span>
         </TileLink>
@@ -170,7 +170,6 @@ export function OverviewScreen() {
             </ul>
           ) : (
             <div className="flex flex-col items-center py-6 text-center">
-              <Illustration name="receipt" size={72} />
               <p className="mt-4 text-base font-semibold">Seu mês começa aqui</p>
               <p className="mt-1 max-w-[280px] text-sm text-[var(--color-muted)]">Registre um gasto ou uma receita para ver para onde o dinheiro está indo.</p>
               <Link href="/add" className={`${textButton} mt-3`}>Fazer primeiro registro</Link>

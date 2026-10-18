@@ -9,15 +9,21 @@ O Prumo não movimenta dinheiro. Ele ajuda a pessoa a entender a situação fina
 | # | Funcionalidade | Onde está | O que entrega |
 |---|---|---|---|
 | 1 | Dashboard financeiro | `/overview` (Início) | Saldo disponível (informado e ajustado pelo que foi pago/recebido), receitas e despesas do mês com comparação ao mês anterior, quanto ainda pode gastar, próximos vencimentos e atalhos. |
-| 2 | Registro de receitas e despesas | `/add`, `/transactions`, `/transactions/[id]` | Teclado de valor em tela cheia, categoria sugerida pela descrição, edição, exclusão, busca, filtros (tipo, categoria, status, fixo/variável, período) e repetição. |
+| 2 | Registro de receitas e despesas | `/add`, `/transactions`, `/transactions/detail?id=` | Teclado de valor em tela cheia, categoria sugerida pela descrição, edição, exclusão, busca, filtros (tipo, categoria, status, fixo/variável, período) e repetição. |
 | 3 | Orçamento por categoria | `/budgets` | Limite mensal por categoria, consumo, quanto resta, alertas a 80% e acima de 100% (também no registro de gasto). |
 | 4 | Contas a pagar e a receber | `/bills` (Agenda) | Atrasadas, próximos 7 dias e mais adiante; status previsto, pago, recebido, vence hoje ou atrasado; recorrência semanal, mensal, anual ou personalizada (a cada N períodos). |
-| 5 | Metas financeiras | `/goals`, `/goals/[id]` | Valor-alvo, prazo, aportes realizados ou planejados, quanto guardar por mês e progresso. O dinheiro continua na conta do usuário. |
+| 5 | Metas financeiras | `/goals`, `/goals/new`, `/goals/detail?id=` | Valor-alvo, prazo, aportes realizados ou planejados, quanto guardar por mês e progresso. O dinheiro continua na conta do usuário. |
 | 6 | Relatórios e insights | `/reports` | Evolução de seis meses, categorias que mais consomem, comparação entre períodos, aumentos incomuns e estimativa de sobra no fim do mês. |
 
 ## Experiência de valores
 
-Sempre que o usuário digita dinheiro (gasto, receita, aporte em meta, limite de orçamento, saldo, valor de meta ou recorrência), o app abre o mesmo teclado em tela cheia: o valor vem primeiro, os detalhes depois. Azul indica gasto/ação; verde indica entrada ou dinheiro guardado.
+- **Registro** (gasto, receita ou aporte): valor primeiro num teclado em tela cheia; depois "Receita", "Guardar" ou "Gasto", categoria (ou meta), descrição e confirmação.
+- **Ajustes rápidos** (saldo, limite de orçamento, valor de recorrência): o mesmo teclado.
+- **Metas e onboarding**: digitação direta no campo, com teclado numérico do celular e formatação da moeda.
+
+## Moeda de exibição
+
+Real brasileiro primeiro, seguido de USD, EUR, JPY, GBP, CNY, AUD, CAD, CHF, HKD e NZD. A escolha muda só a formatação (inclusive casas decimais, como o iene sem centavos); não há conversão cambial.
 
 ## Regras de cálculo
 

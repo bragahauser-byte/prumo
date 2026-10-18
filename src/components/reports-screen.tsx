@@ -46,7 +46,7 @@ export function ReportsScreen() {
   if (expenses.length === 0) {
     return (
       <Card className="flex flex-col items-center px-6 py-14 text-center">
-        <Illustration name="chart" size={120} />
+        <Illustration name="reports" size={144} />
         <h2 className="mt-6 text-xl font-semibold">Seus relatórios aparecem aqui</h2>
         <p className="mt-2 max-w-[340px] text-sm leading-5 text-[var(--color-muted)]">Com receitas e despesas registradas, mostramos a evolução do mês a mês, as categorias que mais pesam e aumentos fora do comum.</p>
         <Link href="/add" className={`${primaryButton} mt-6 w-full max-w-[320px]`}>Fazer primeiro registro</Link>
@@ -57,9 +57,9 @@ export function ReportsScreen() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <button type="button" onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Mês anterior" className={`flex h-11 w-11 items-center justify-center rounded-full bg-white ${focusRing}`}><ChevronLeft size={20} aria-hidden="true" /></button>
+        <button type="button" onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Mês anterior" className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] ${focusRing}`}><ChevronLeft size={20} aria-hidden="true" /></button>
         <p className="text-base font-semibold first-letter:uppercase" aria-live="polite">{formatMonthKey(month)}</p>
-        <button type="button" onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Próximo mês" className={`flex h-11 w-11 items-center justify-center rounded-full bg-white ${focusRing}`}><ChevronRight size={20} aria-hidden="true" /></button>
+        <button type="button" onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Próximo mês" className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] ${focusRing}`}><ChevronRight size={20} aria-hidden="true" /></button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

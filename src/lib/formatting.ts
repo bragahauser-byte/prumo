@@ -1,20 +1,24 @@
+import { currencyDecimals } from "@/domain/currencies";
+
+/** Valores são guardados em centésimos; a moeda define quantas casas aparecem (ex.: iene sem centavos). */
 export function formatCurrency(amountCents: number, currency = "BRL") {
+  const decimals = currencyDecimals(currency);
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(amountCents / 100);
 }
 
 /** Valor sem centavos quando redondo, para números de destaque. */
 export function formatCurrencyCompact(amountCents: number, currency = "BRL") {
-  const whole = amountCents % 100 === 0;
+  const whole = amountCents % 100 === 0 || currencyDecimals(currency) === 0;
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency,
     minimumFractionDigits: whole ? 0 : 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: whole ? 0 : 2,
   }).format(amountCents / 100);
 }
 

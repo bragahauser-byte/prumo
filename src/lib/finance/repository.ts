@@ -2,8 +2,9 @@ import { z } from "zod";
 import { generateOccurrenceDates, type RecurringFrequency } from "../../domain/recurrence";
 import type { ExpenseStatus } from "../../domain/financial";
 import type { TransactionKind } from "../../domain/categories";
+import { currencyCodes, type CurrencyCode } from "../../domain/currencies";
 
-export type CurrencyCode = "BRL" | "USD" | "EUR";
+export type { CurrencyCode } from "../../domain/currencies";
 export type FinanceGoal = "control_expenses" | "remember_bills" | "understand_categories" | "track_available_balance";
 
 export type FinancePreferences = {
@@ -104,7 +105,7 @@ const preferencesSchema = z.object({
   reportedBalanceCents: z.number().int().nullable(),
   balanceReportedOn: dateSchema.nullable().default(null),
   payday: z.number().int().min(1).max(31).nullable(),
-  currency: z.enum(["BRL", "USD", "EUR"]),
+  currency: z.enum(currencyCodes),
   goals: z.array(z.enum(["control_expenses", "remember_bills", "understand_categories", "track_available_balance"])),
   termsAccepted: z.boolean(),
   notificationsEnabled: z.boolean(),

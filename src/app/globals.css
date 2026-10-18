@@ -1,12 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #f5f5f7;
+  --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-soft: #f5f5f7;
   --color-text: #1d1d1f;
   --color-muted: #6e6e73;
-  --color-border: #e5e5ea;
+  --color-border: #ececf0;
+  --color-ink: #000000;
+  --color-placeholder: #a1a1a6;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 24px rgba(0, 0, 0, 0.05);
   --color-action: #0066cc;
   --color-action-pressed: #0055aa;
   --color-action-soft: #e8f1fb;
@@ -26,6 +29,8 @@
  * Escala tipográfica do produto: 12, 14, 16, 20, 24, 28 e 32 px.
  * text-xs=12 · text-sm=14 · text-base=16 · text-xl=20 · text-2xl=24 · text-3xl=28 · text-4xl=32.
  * text-lg é redefinido para 20 px para que nenhum tamanho fora da escala apareça.
+ * Exceção única: text-display (64 px) para o valor em destaque do teclado e do comprovante,
+ * como nas referências de registro de gasto.
  */
 @theme inline {
   --color-background: var(--color-bg);
@@ -38,43 +43,56 @@
   --text-3xl--line-height: 2.125rem;
   --text-4xl: 2rem;
   --text-4xl--line-height: 2.5rem;
+  --text-display: 4rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
 }
 
-* {
-  box-sizing: border-box;
+/* Estilos base ficam na camada "base" para que as classes utilitárias (tamanhos de fonte etc.) sempre prevaleçam. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans), Arial, sans-serif;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans), Arial, sans-serif;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
-.tabular {
-  font-variant-numeric: tabular-nums;
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @keyframes sheet-in {
   from { transform: translateY(24px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, -20vh, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(var(--drift, 0px), 110vh, 0) rotate(var(--spin, 540deg)); opacity: 1; }
 }
 
 @keyframes amount-bump {

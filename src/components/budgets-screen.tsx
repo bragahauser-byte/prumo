@@ -58,9 +58,9 @@ export function BudgetsScreen() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <button type="button" onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Mês anterior" className={`flex h-11 w-11 items-center justify-center rounded-full bg-white ${focusRing}`}><ChevronLeft size={20} aria-hidden="true" /></button>
+        <button type="button" onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Mês anterior" className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] ${focusRing}`}><ChevronLeft size={20} aria-hidden="true" /></button>
         <p className="text-base font-semibold first-letter:uppercase" aria-live="polite">{formatMonthKey(month)}</p>
-        <button type="button" onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Próximo mês" className={`flex h-11 w-11 items-center justify-center rounded-full bg-white ${focusRing}`}><ChevronRight size={20} aria-hidden="true" /></button>
+        <button type="button" onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Próximo mês" className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] ${focusRing}`}><ChevronRight size={20} aria-hidden="true" /></button>
       </div>
 
       {budgets.length ? (
@@ -84,7 +84,7 @@ export function BudgetsScreen() {
         </Card>
       ) : (
         <Card className="flex flex-col items-center px-6 py-10 text-center">
-          <Illustration name="jar" size={112} />
+          <Illustration name="budgets" size={144} />
           <h2 className="mt-5 text-xl font-semibold">Decida antes de gastar</h2>
           <p className="mt-1 max-w-[340px] text-sm leading-5 text-[var(--color-muted)]">Defina quanto quer gastar por categoria. Avisamos quando chegar a 80% e quando passar do limite.</p>
         </Card>
@@ -134,10 +134,10 @@ export function BudgetsScreen() {
 
       <Card aria-labelledby="unbudgeted-title">
         <SectionHeader id="unbudgeted-title" title={budgets.length ? "Sem limite definido" : "Escolha uma categoria"} />
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="grid divide-y divide-[var(--color-border)] sm:grid-cols-2 sm:gap-x-8 sm:divide-y-0">
           {unbudgeted.map((category) => (
             <li key={category}>
-              <button type="button" onClick={() => setEditing(category)} className={`flex w-full items-center gap-3 rounded-2xl bg-[var(--color-soft)] px-3 py-3 text-left transition-colors hover:bg-[var(--color-border)] ${focusRing}`}>
+              <button type="button" onClick={() => setEditing(category)} className={`flex w-full items-center gap-3 rounded-xl py-3 text-left transition-colors hover:bg-[var(--color-soft)] ${focusRing}`}>
                 <CategoryIcon category={category} size={40} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-base font-medium">{category}</span>

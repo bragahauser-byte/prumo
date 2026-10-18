@@ -7,10 +7,10 @@ import { CalendarClock, Check, ChevronLeft, Trash2 } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
 import { GoalForm } from "@/components/goal-form";
 import { useFinanceSummary } from "@/components/use-finance-summary";
-import { Illustration, goalIllustration } from "@/components/ui/illustration";
+import { GoalIcon } from "@/components/ui/category-icon";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { Sheet } from "@/components/ui/sheet";
-import { Card, SectionHeader, dangerButton, focusRing, primaryButton, softButton, textButton } from "@/components/ui/primitives";
+import { Card, SectionHeader, dangerButton, focusRing, inkButton, primaryButton, softButton, textButton } from "@/components/ui/primitives";
 import { goalProgress } from "@/domain/planning";
 import type { FinanceGoalContribution } from "@/lib/finance/repository";
 import { formatCalendarDate, formatCurrency, formatShortDate } from "@/lib/formatting";
@@ -62,14 +62,14 @@ export function GoalDetail() {
       <Link href="/goals" className={`${textButton} -ml-3`}><ChevronLeft size={18} aria-hidden="true" /> Metas</Link>
 
       <Card className="flex flex-col items-center text-center">
-        <ProgressRing size={248} stroke={14} value={progress.ratio} color="var(--color-success)" track="var(--color-soft)" label={`${Math.round(progress.ratio * 100)}% da meta ${goal.name}`}>
-          <Illustration name={goalIllustration(goal.icon)} size={88} />
+        <ProgressRing size={248} stroke={12} value={progress.ratio} color="var(--color-success)" track="var(--color-soft)" label={`${Math.round(progress.ratio * 100)}% da meta ${goal.name}`}>
+          <GoalIcon icon={goal.icon} size={72} />
           <span className="mt-2 text-3xl font-semibold">{Math.round(progress.ratio * 100)}%</span>
         </ProgressRing>
         <h2 className="mt-4 text-2xl font-semibold">{goal.name}</h2>
         <p className="tabular mt-1 text-base text-[var(--color-muted)]">{formatCurrency(progress.savedCents, currency)} de {formatCurrency(goal.targetCents, currency)}</p>
         <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
-          <Link href={`/add?goal=${goal.id}`} className={`${primaryButton} bg-[var(--color-success)] hover:bg-[var(--color-success)]`}>Guardar dinheiro</Link>
+          <Link href={`/add?goal=${goal.id}`} className={inkButton}>Guardar dinheiro</Link>
           <button type="button" onClick={() => setEditing(true)} className={softButton}>Editar meta</button>
         </div>
       </Card>

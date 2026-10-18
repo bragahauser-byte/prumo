@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { preferences, isLoading, hasLoaded, error, refresh } = useFinance();
   const isOnboarding = pathname.startsWith("/onboarding");
   const isOnboardingEdit = pathname === "/onboarding/edit";
-  const isFullScreen = pathname.startsWith("/add");
+  const isFullScreen = pathname.startsWith("/add") || pathname.startsWith("/goals/new");
   const activeItem = navigation.find((item) => isActiveRoute(pathname, item.href));
   const pageTitle = activeItem?.title ?? activeItem?.label ?? "Prumo";
   const onboardingComplete = preferences?.onboardingCompleted === true;
@@ -93,9 +93,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (isFullScreen) return <main>{children}</main>;
 
   return (
-    <div className="min-h-dvh bg-[var(--color-bg)] text-[var(--color-text)]">
+    <div className="min-h-dvh bg-white text-[var(--color-text)]">
       <div className="mx-auto flex min-h-dvh max-w-[1280px] gap-10 px-4 pb-[calc(116px+env(safe-area-inset-bottom))] pt-[max(env(safe-area-inset-top),20px)] sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
-        <aside className="sticky top-10 hidden h-[calc(100dvh-5rem)] w-60 shrink-0 flex-col lg:flex">
+        <aside className="sticky top-10 hidden h-[calc(100dvh-5rem)] w-60 shrink-0 flex-col border-r border-[var(--color-border)] pr-6 lg:flex">
           <Link href="/overview" className={`mb-8 flex items-center gap-3 rounded-2xl px-3 py-1 ${focusRing}`}>
             <Image src={asset("/app-icon.png")} alt="" width={36} height={36} className="rounded-[10px]" />
             <span className="text-xl font-semibold">Prumo</span>
@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={href}
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 items-center gap-3 rounded-full px-4 text-sm font-semibold transition-colors ${focusRing} ${active ? "bg-white text-[var(--color-action)] shadow-[0_1px_4px_rgba(0,0,0,0.05)]" : "text-[var(--color-muted)] hover:bg-white/70 hover:text-[var(--color-text)]"}`}
+                  className={`flex min-h-11 items-center gap-3 rounded-full px-4 text-sm font-semibold transition-colors ${focusRing} ${active ? "bg-[var(--color-soft)] text-[var(--color-text)]" : "text-[var(--color-muted)] hover:bg-[var(--color-soft)] hover:text-[var(--color-text)]"}`}
                 >
                   <Icon size={20} strokeWidth={active ? 2.25 : 2} aria-hidden="true" />
                   <span>{label}</span>

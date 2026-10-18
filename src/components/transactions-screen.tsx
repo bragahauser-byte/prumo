@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
 import { TransactionRow } from "@/components/transaction-row";
-import { Illustration } from "@/components/ui/illustration";
 import { Sheet } from "@/components/ui/sheet";
 import { Card, Segmented, fieldClass, focusRing, labelClass, primaryButton, softButton } from "@/components/ui/primitives";
 import { expenseCategories, incomeCategories, type TransactionKind } from "@/domain/categories";
@@ -71,7 +70,6 @@ export function TransactionsScreen() {
   if (expenses.length === 0) {
     return (
       <Card className="flex flex-col items-center px-6 py-14 text-center">
-        <Illustration name="receipt" size={120} />
         <h2 className="mt-6 text-xl font-semibold">Nenhuma transação ainda</h2>
         <p className="mt-2 max-w-[320px] text-sm leading-5 text-[var(--color-muted)]">Registre entradas e saídas manualmente. Sugerimos a categoria pela descrição para acelerar.</p>
         <Link href="/add" className={`${primaryButton} mt-6 w-full max-w-[320px]`}><Plus size={20} aria-hidden="true" /> Novo registro</Link>
@@ -87,9 +85,9 @@ export function TransactionsScreen() {
           <label className="relative flex-1">
             <span className="sr-only">Buscar transações</span>
             <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)]" aria-hidden="true" />
-            <input value={search} onChange={(event) => setSearch(event.target.value.slice(0, 80))} placeholder="Buscar por descrição ou categoria" className="min-h-12 w-full rounded-full border border-transparent bg-white pl-11 pr-4 text-base outline-none focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--color-action-soft)]" />
+            <input value={search} onChange={(event) => setSearch(event.target.value.slice(0, 80))} placeholder="Buscar por descrição ou categoria" className="min-h-12 w-full rounded-full border border-transparent bg-[var(--color-soft)] pl-11 pr-4 text-base outline-none focus:border-[var(--color-action)] focus:ring-2 focus:ring-[var(--color-action-soft)]" />
           </label>
-          <button type="button" onClick={() => setShowFilters(true)} className={`relative inline-flex min-h-12 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold ${focusRing}`}>
+          <button type="button" onClick={() => setShowFilters(true)} className={`relative inline-flex min-h-12 items-center gap-2 rounded-full bg-[var(--color-soft)] px-4 text-sm font-semibold ${focusRing}`}>
             <SlidersHorizontal size={18} aria-hidden="true" /> <span className="hidden sm:inline">Filtros</span>
             {activeFilters ? <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-action)] px-1 text-xs text-white">{activeFilters}</span> : null}
             <span className="sr-only">{activeFilters ? `${activeFilters} filtros ativos` : ""}</span>
@@ -98,8 +96,8 @@ export function TransactionsScreen() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-2xl bg-white px-4 py-3"><span className="text-[var(--color-muted)]">Entradas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-success)]">{formatCurrency(totals.income, currency)}</span></div>
-        <div className="rounded-2xl bg-white px-4 py-3"><span className="text-[var(--color-muted)]">Saídas</span><span className="tabular mt-0.5 block text-xl font-semibold">{formatCurrency(totals.expense, currency)}</span></div>
+        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Entradas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-success)]">{formatCurrency(totals.income, currency)}</span></div>
+        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Saídas</span><span className="tabular mt-0.5 block text-xl font-semibold">{formatCurrency(totals.expense, currency)}</span></div>
       </div>
 
       {groups.length ? (

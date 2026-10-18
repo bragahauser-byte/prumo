@@ -98,7 +98,7 @@ export function BillsScreen() {
             </section>
           )) : (
             <div className="flex flex-col items-center py-10 text-center">
-              <Illustration name="calendar" size={96} />
+              <Illustration name="bills" size={128} />
               <h2 className="mt-5 text-xl font-semibold">{kind === "income" ? "Nada a receber por enquanto" : "Nenhuma conta pendente"}</h2>
               <p className="mt-1 max-w-[300px] text-sm text-[var(--color-muted)]">{kind === "income" ? "Cadastre salário, reembolsos ou freelas para saber quando o dinheiro entra." : "Cadastre aluguel, assinaturas e mensalidades para não esquecer nenhum vencimento."}</p>
             </div>
