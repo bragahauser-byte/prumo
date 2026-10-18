@@ -6,10 +6,12 @@ import {
   parseSignedCurrencyToCents,
 } from "../../domain/financial";
 import type {
+  FinanceBudget,
   FinanceExpense,
   FinancePreferences,
   FinanceRecurringRule,
   FinanceRepository,
+  FinanceSavingsGoal,
   FinanceSnapshot,
 } from "./repository";
 
@@ -46,14 +48,20 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
     mode: "supabase",
     async load(): Promise<FinanceSnapshot> {
       const ownerId = await requireUserId();
-      const [profileResult, expenseResult, ruleResult] = await Promise.all([
-        client.from("profiles").select("display_name, monthly_income, reported_balance, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed").eq("user_id", ownerId).maybeSingle(),
-        client.from("expenses").select("id, description, amount, category, due_date, status, paid_on, notes, recurring_rule_id, occurrence_date").order("due_date", { ascending: true }),
-        client.from("recurring_rules").select("id, name, amount, category, frequency, starts_on, due_day, ends_on, is_active, is_variable, notes").order("created_at", { ascending: false }),
+      const [profileResult, expenseResult, ruleResult, budgetResult, goalResult, contributionResult] = await Promise.all([
+        client.from("profiles").select("display_name, monthly_income, reported_balance, balance_reported_on, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed").eq("user_id", ownerId).maybeSingle(),
+        client.from("expenses").select("id, kind, description, amount, category, due_date, status, paid_on, notes, recurring_rule_id, occurrence_date").order("due_date", { ascending: true }),
+        client.from("recurring_rules").select("id, kind, name, amount, category, frequency, interval_count, starts_on, due_day, ends_on, is_active, is_variable, notes").order("created_at", { ascending: false }),
+        client.from("budgets").select("category, limit_amount").order("category"),
+        client.from("savings_goals").select("id, name, icon, target_amount, deadline, created_on").order("created_at"),
+        client.from("goal_contributions").select("id, goal_id, amount, contributed_on, status").order("contributed_on"),
       ]);
       throwOnError(profileResult.error);
       throwOnError(expenseResult.error);
       throwOnError(ruleResult.error);
+      throwOnError(budgetResult.error);
+      throwOnError(goalResult.error);
+      throwOnError(contributionResult.error);
 
       const preferences: FinancePreferences | null = profileResult.data ? {
         displayName: profileResult.data.display_name,
@@ -61,6 +69,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
           ? null
           : amountToCents(profileResult.data.monthly_income),
         reportedBalanceCents: balanceToCents(profileResult.data.reported_balance),
+        balanceReportedOn: profileResult.data.balance_reported_on,
         payday: profileResult.data.payday,
         currency: profileResult.data.currency,
         goals: profileResult.data.focus_areas,
@@ -73,6 +82,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         preferences,
         expenses: (expenseResult.data ?? []).map((expense): FinanceExpense => ({
           id: expense.id,
+          kind: expense.kind,
           description: expense.description,
           amountCents: amountToCents(expense.amount),
           category: expense.category,
@@ -85,16 +95,38 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         })),
         recurringRules: (ruleResult.data ?? []).map((rule): FinanceRecurringRule => ({
           id: rule.id,
+          kind: rule.kind,
           name: rule.name,
           amountCents: amountToCents(rule.amount),
           category: rule.category,
           frequency: rule.frequency,
+          interval: rule.interval_count,
           startsOn: rule.starts_on,
           dueDay: rule.due_day,
           endsOn: rule.ends_on,
           isActive: rule.is_active,
           isVariable: rule.is_variable,
           notes: rule.notes,
+        })),
+        budgets: (budgetResult.data ?? []).map((budget): FinanceBudget => ({
+          category: budget.category,
+          limitCents: amountToCents(budget.limit_amount),
+        })),
+        savingsGoals: (goalResult.data ?? []).map((goal): FinanceSavingsGoal => ({
+          id: goal.id,
+          name: goal.name,
+          icon: goal.icon,
+          targetCents: amountToCents(goal.target_amount),
+          deadline: goal.deadline,
+          createdOn: goal.created_on,
+          contributions: (contributionResult.data ?? [])
+            .filter((contribution) => contribution.goal_id === goal.id)
+            .map((contribution) => ({
+              id: contribution.id,
+              amountCents: amountToCents(contribution.amount),
+              date: contribution.contributed_on,
+              status: contribution.status,
+            })),
         })),
       };
     },
@@ -104,6 +136,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         display_name: preferences.displayName,
         monthly_income: preferences.monthlyIncomeCents === null ? null : formatCentsAsDecimal(preferences.monthlyIncomeCents),
         reported_balance: preferences.reportedBalanceCents === null ? null : formatSignedCentsAsDecimal(preferences.reportedBalanceCents),
+        balance_reported_on: preferences.balanceReportedOn,
         payday: preferences.payday,
         currency: preferences.currency,
         focus_areas: preferences.goals,
@@ -119,6 +152,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
       const { error } = await client.from("expenses").upsert({
         id: expense.id,
         user_id: ownerId,
+        kind: expense.kind,
         description: expense.description,
         amount: formatCentsAsDecimal(expense.amountCents),
         category: expense.category,
@@ -151,6 +185,8 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
       const { error } = await client.from("recurring_rules").upsert({
         id: rule.id,
         user_id: ownerId,
+        kind: rule.kind,
+        interval_count: rule.interval,
         name: rule.name,
         amount: formatCentsAsDecimal(rule.amountCents),
         category: rule.category,
@@ -177,6 +213,55 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
       });
       throwOnError(error);
       return Number(data ?? 0);
+    },
+    async saveBudget(budget) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("budgets").upsert({
+        user_id: ownerId,
+        category: budget.category,
+        limit_amount: formatCentsAsDecimal(budget.limitCents),
+      });
+      throwOnError(error);
+    },
+    async deleteBudget(category) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("budgets").delete().eq("user_id", ownerId).eq("category", category);
+      throwOnError(error);
+    },
+    async saveSavingsGoal(goal) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("savings_goals").upsert({
+        id: goal.id,
+        user_id: ownerId,
+        name: goal.name,
+        icon: goal.icon,
+        target_amount: formatCentsAsDecimal(goal.targetCents),
+        deadline: goal.deadline,
+        created_on: goal.createdOn,
+      });
+      throwOnError(error);
+      const keptIds = goal.contributions.map((contribution) => contribution.id);
+      const removal = client.from("goal_contributions").delete().eq("user_id", ownerId).eq("goal_id", goal.id);
+      const { error: removalError } = keptIds.length
+        ? await removal.not("id", "in", `(${keptIds.join(",")})`)
+        : await removal;
+      throwOnError(removalError);
+      if (goal.contributions.length) {
+        const { error: contributionError } = await client.from("goal_contributions").upsert(goal.contributions.map((contribution) => ({
+          id: contribution.id,
+          user_id: ownerId,
+          goal_id: goal.id,
+          amount: formatCentsAsDecimal(contribution.amountCents),
+          contributed_on: contribution.date,
+          status: contribution.status,
+        })));
+        throwOnError(contributionError);
+      }
+    },
+    async deleteSavingsGoal(id) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("savings_goals").delete().eq("id", id).eq("user_id", ownerId);
+      throwOnError(error);
     },
   };
 }

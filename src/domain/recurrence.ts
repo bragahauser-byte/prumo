@@ -5,6 +5,8 @@ export type RecurringSchedule = {
   startsOn: string;
   dueDay: number | null;
   endsOn?: string | null;
+  /** Repete a cada N semanas, meses ou anos. Padrão: 1. */
+  interval?: number;
 };
 
 function parseCalendarDate(value: string) {
@@ -31,18 +33,23 @@ export function generateOccurrenceDates(schedule: RecurringSchedule, throughDate
   const configuredEnd = schedule.endsOn ? parseCalendarDate(schedule.endsOn) : end;
   const limit = configuredEnd < end ? configuredEnd : end;
   const windowStart = requestedStart > start ? requestedStart : start;
+  const interval = schedule.interval ?? 1;
+  if (!Number.isInteger(interval) || interval < 1 || interval > 12) {
+    throw new RangeError("Interval must be an integer from 1 to 12.");
+  }
   if (windowStart > limit) return [];
 
   if (schedule.frequency === "weekly") {
     const dates: string[] = [];
+    const stepDays = 7 * interval;
     const occurrence = new Date(start);
     if (occurrence < windowStart) {
-      const weeksToSkip = Math.ceil((windowStart.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      occurrence.setUTCDate(occurrence.getUTCDate() + weeksToSkip * 7);
+      const periodsToSkip = Math.ceil((windowStart.getTime() - start.getTime()) / (stepDays * 24 * 60 * 60 * 1000));
+      occurrence.setUTCDate(occurrence.getUTCDate() + periodsToSkip * stepDays);
     }
     while (occurrence <= limit) {
       dates.push(formatDate(occurrence));
-      occurrence.setUTCDate(occurrence.getUTCDate() + 7);
+      occurrence.setUTCDate(occurrence.getUTCDate() + stepDays);
     }
     return dates;
   }
@@ -53,16 +60,20 @@ export function generateOccurrenceDates(schedule: RecurringSchedule, throughDate
 
   const dates: string[] = [];
   if (schedule.frequency === "monthly") {
-    const cursor = new Date(Date.UTC(windowStart.getUTCFullYear(), windowStart.getUTCMonth(), 1));
-    while (cursor <= limit) {
-      const occurrence = clampedDate(cursor.getUTCFullYear(), cursor.getUTCMonth(), schedule.dueDay);
+    const startIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
+    const windowIndex = windowStart.getUTCFullYear() * 12 + windowStart.getUTCMonth();
+    let index = startIndex + Math.max(0, Math.floor((windowIndex - startIndex) / interval)) * interval;
+    while (index <= limit.getUTCFullYear() * 12 + limit.getUTCMonth()) {
+      const occurrence = clampedDate(Math.floor(index / 12), index % 12, schedule.dueDay);
       if (occurrence >= windowStart && occurrence <= limit) dates.push(formatDate(occurrence));
-      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+      index += interval;
     }
     return dates;
   }
 
-  for (let year = windowStart.getUTCFullYear(); year <= limit.getUTCFullYear(); year += 1) {
+  const startYear = start.getUTCFullYear();
+  let year = startYear + Math.max(0, Math.floor((windowStart.getUTCFullYear() - startYear) / interval)) * interval;
+  for (; year <= limit.getUTCFullYear(); year += interval) {
     const occurrence = clampedDate(year, start.getUTCMonth(), schedule.dueDay);
     if (occurrence >= windowStart && occurrence <= limit) dates.push(formatDate(occurrence));
   }

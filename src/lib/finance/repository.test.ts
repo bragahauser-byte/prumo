@@ -11,12 +11,13 @@ describe("local finance repository", () => {
 
   it("starts empty and persists onboarding preferences after a new repository is created", async () => {
     const first = createLocalFinanceRepository();
-    expect(await first.load()).toEqual({ preferences: null, expenses: [], recurringRules: [] });
+    expect(await first.load()).toEqual({ preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [] });
 
     const preferences: FinancePreferences = {
       displayName: "Ana",
       monthlyIncomeCents: 350000,
       reportedBalanceCents: 120000,
+      balanceReportedOn: "2026-10-10",
       payday: 5,
       currency: "BRL",
       goals: ["control_expenses"],
@@ -34,6 +35,7 @@ describe("local finance repository", () => {
     const repository = createLocalFinanceRepository();
     const expense: FinanceExpense = {
       id: "expense-1",
+      kind: "expense",
       description: "Internet",
       amountCents: 12990,
       category: "Contas",
@@ -61,10 +63,12 @@ describe("local finance repository", () => {
     const repository = createLocalFinanceRepository();
     const rule: FinanceRecurringRule = {
       id: "rule-1",
+      kind: "expense",
       name: "Conta de energia",
       amountCents: 18000,
       category: "Contas",
       frequency: "monthly",
+      interval: 1,
       startsOn: "2028-01-31",
       dueDay: 31,
       endsOn: null,
@@ -90,5 +94,54 @@ describe("local finance repository", () => {
     await repository.generateOccurrences(rule.id, "2028-04-30");
     const reloaded = await repository.load();
     expect(reloaded.expenses.find((expense) => expense.id === februaryOccurrence.id)?.amountCents).toBe(19500);
+  });
+
+  it("reads data saved before receitas, orçamentos e metas existed", async () => {
+    localStorage.setItem("personal-finance:data:v1", JSON.stringify({
+      preferences: null,
+      expenses: [{ id: "old", description: "Internet", amountCents: 9990, category: "Contas", date: "2026-10-01", status: "paid", paidOn: "2026-10-01", notes: null, recurringRuleId: null, occurrenceDate: null }],
+      recurringRules: [{ id: "rule-old", name: "Aluguel", amountCents: 150000, category: "Moradia", frequency: "monthly", startsOn: "2026-10-05", dueDay: 5, endsOn: null, isActive: true, isVariable: false, notes: null }],
+    }));
+    const snapshot = await createLocalFinanceRepository().load();
+    expect(snapshot.expenses[0].kind).toBe("expense");
+    expect(snapshot.recurringRules[0]).toMatchObject({ kind: "expense", interval: 1 });
+    expect(snapshot.budgets).toEqual([]);
+    expect(snapshot.savingsGoals).toEqual([]);
+  });
+
+  it("persists income occurrences, budgets and savings goals", async () => {
+    const repository = createLocalFinanceRepository();
+    await repository.saveRecurringRule({
+      id: "salary",
+      kind: "income",
+      name: "Salário",
+      amountCents: 500000,
+      category: "Salário",
+      frequency: "monthly",
+      interval: 2,
+      startsOn: "2028-01-05",
+      dueDay: 5,
+      endsOn: null,
+      isActive: true,
+      isVariable: false,
+      notes: null,
+    });
+    expect(await repository.generateOccurrences("salary", "2028-06-30")).toBe(3);
+    const incomes = (await repository.load()).expenses;
+    expect(incomes.every((item) => item.kind === "income")).toBe(true);
+    expect(incomes.map((item) => item.date).sort()).toEqual(["2028-01-05", "2028-03-05", "2028-05-05"]);
+
+    await repository.saveBudget({ category: "Lazer", limitCents: 30000 });
+    await repository.saveBudget({ category: "Lazer", limitCents: 40000 });
+    expect((await repository.load()).budgets).toEqual([{ category: "Lazer", limitCents: 40000 }]);
+    await repository.deleteBudget("Lazer");
+    expect((await repository.load()).budgets).toEqual([]);
+
+    const goal = { id: "goal", name: "Viagem", icon: "travel", targetCents: 600000, deadline: "2028-12-31", createdOn: "2028-01-01", contributions: [] };
+    await repository.saveSavingsGoal(goal);
+    await repository.saveSavingsGoal({ ...goal, contributions: [{ id: "c1", amountCents: 50000, date: "2028-01-10", status: "done" }] });
+    expect((await createLocalFinanceRepository().load()).savingsGoals[0].contributions).toHaveLength(1);
+    await repository.deleteSavingsGoal("goal");
+    expect((await repository.load()).savingsGoals).toEqual([]);
   });
 });
