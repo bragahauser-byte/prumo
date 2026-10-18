@@ -13,7 +13,9 @@
 </p>
 
 <p align="center">
-  <a href="https://bragahauser-byte.github.io/prumo/"><strong>Abrir o app</strong></a>
+  <a href="https://prumo-zeta-liart.vercel.app"><strong>Abrir o app</strong></a>
+  ·
+  <a href="https://bragahauser-byte.github.io/prumo/">Versão no GitHub Pages</a>
   ·
   <a href="docs/PRODUCT_SPEC.md">Produto</a>
   ·
@@ -110,7 +112,7 @@ supabase test db
 ## Publicação
 
 - **GitHub Pages:** cada push na `main` roda `.github/workflows/pages.yml` — testes, build estático (`DEPLOY_TARGET=pages`, servido em `/prumo`) e publicação. Usa o modo local.
-- **Vercel:** importe o repositório; o build padrão do Next funciona sem configuração (modo local). Com as variáveis do Supabase no projeto, login e sincronização passam a funcionar.
+- **Vercel:** https://prumo-zeta-liart.vercel.app — publica a cada push na `main` com o build padrão do Next (modo local, sem variáveis). Com as variáveis do Supabase no projeto, login e sincronização passam a funcionar.
 
 ## Scripts
 
