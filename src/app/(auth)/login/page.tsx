@@ -9,7 +9,7 @@ export default async function LoginPage({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
-      <Link href="/overview" className="mb-10 text-sm font-medium underline underline-offset-4">Finanças pessoais</Link>
+      <Link href="/overview" className="mb-10 text-sm font-medium underline underline-offset-4">Prumo</Link>
       <h1 className="text-2xl font-semibold">Acessar sua conta</h1>
       <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">Entre para consultar seus registros financeiros.</p>
       <div className="mt-6"><AuthFeedback error={params.error} registered={params.registered} /></div>

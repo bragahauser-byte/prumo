@@ -1,67 +1,87 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { CategoryPicker } from "@/components/category-picker";
 import { useFinance } from "@/components/finance-provider";
-import { formatCentsAsDecimal, parseCurrencyToCents } from "@/domain/financial";
+import { MoneyKeypad } from "@/components/ui/money-keypad";
+import { Segmented, fieldClass, focusRing, labelClass, primaryButton, softButton } from "@/components/ui/primitives";
+import { categoriesFor, type TransactionKind } from "@/domain/categories";
+import { addDays, todayISO } from "@/lib/dates";
 import { createFinanceId, type FinanceRecurringRule } from "@/lib/finance/repository";
-
-function centsToInput(cents: number) {
-  return `${Math.floor(cents / 100)},${String(cents % 100).padStart(2, "0")}`;
-}
+import { formatCurrency } from "@/lib/formatting";
 
 function isDate(value: string) {
   const date = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+export const frequencyLabels: Record<FinanceRecurringRule["frequency"], { one: string; many: string; adjective: string }> = {
+  weekly: { one: "semana", many: "semanas", adjective: "Semanal" },
+  monthly: { one: "mês", many: "meses", adjective: "Mensal" },
+  yearly: { one: "ano", many: "anos", adjective: "Anual" },
+};
+
+export function describeSchedule(rule: Pick<FinanceRecurringRule, "frequency" | "interval" | "dueDay">) {
+  const label = frequencyLabels[rule.frequency];
+  const base = rule.interval > 1 ? `A cada ${rule.interval} ${label.many}` : label.adjective;
+  return rule.dueDay && rule.frequency !== "weekly" ? `${base} · dia ${rule.dueDay}` : base;
+}
+
 export function RecurringForm({
   rule,
+  defaultKind = "expense",
+  currency,
   onSaved,
   onCancel,
 }: {
   rule?: FinanceRecurringRule;
-  onSaved?: () => void;
-  onCancel?: () => void;
+  defaultKind?: TransactionKind;
+  currency: string;
+  onSaved: (message: string) => void;
+  onCancel: () => void;
 }) {
   const { saveRecurringRule, generateOccurrences, isSaving } = useFinance();
+  const today = todayISO();
+  const [kind, setKind] = useState<TransactionKind>(rule?.kind ?? defaultKind);
   const [name, setName] = useState(rule?.name ?? "");
-  const [amount, setAmount] = useState(rule ? centsToInput(rule.amountCents) : "");
+  const [amountCents, setAmountCents] = useState(rule?.amountCents ?? 0);
   const [category, setCategory] = useState(rule?.category ?? "");
   const [frequency, setFrequency] = useState<FinanceRecurringRule["frequency"]>(rule?.frequency ?? "monthly");
-  const [startsOn, setStartsOn] = useState(rule?.startsOn ?? new Date().toISOString().slice(0, 10));
-  const [dueDay, setDueDay] = useState(rule?.dueDay == null ? "" : String(rule.dueDay));
+  const [interval, setInterval] = useState(String(rule?.interval ?? 1));
+  const [startsOn, setStartsOn] = useState(rule?.startsOn ?? today);
+  const [dueDay, setDueDay] = useState(rule?.dueDay == null ? String(Number(today.slice(8, 10))) : String(rule.dueDay));
   const [endsOn, setEndsOn] = useState(rule?.endsOn ?? "");
   const [isVariable, setIsVariable] = useState(rule?.isVariable ?? false);
-  const [notes, setNotes] = useState(rule?.notes ?? "");
-  const [message, setMessage] = useState("");
-  const [failed, setFailed] = useState(false);
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
-    setFailed(false);
-    const amountCents = parseCurrencyToCents(amount);
+    setError(null);
     const configuredDueDay = frequency === "weekly" ? null : Number(dueDay);
-    if (!name.trim() || name.trim().length > 120 || !category || amountCents === null || !isDate(startsOn)
-      || (frequency !== "weekly" && (!Number.isInteger(configuredDueDay) || configuredDueDay! < 1 || configuredDueDay! > 31))
-      || (endsOn && (!isDate(endsOn) || endsOn < startsOn))) {
-      setFailed(true);
-      setMessage("Confira nome, valor, categoria, frequência e datas.");
-      return;
-    }
+    const configuredInterval = Number(interval);
+    if (!name.trim()) return setError("Dê um nome para a recorrência.");
+    if (!amountCents) return setError("Informe o valor.");
+    if (!categoriesFor(kind).includes(category)) return setError("Escolha uma categoria.");
+    if (!isDate(startsOn)) return setError("Confira a data inicial.");
+    if (!Number.isInteger(configuredInterval) || configuredInterval < 1 || configuredInterval > 12) return setError("A repetição deve ser de 1 a 12.");
+    if (frequency !== "weekly" && (!Number.isInteger(configuredDueDay) || configuredDueDay! < 1 || configuredDueDay! > 31)) return setError("Escolha um dia de vencimento entre 1 e 31.");
+    if (endsOn && (!isDate(endsOn) || endsOn < startsOn)) return setError("A data final precisa ser depois da inicial.");
 
     const nextRule: FinanceRecurringRule = {
       id: rule?.id ?? createFinanceId(),
+      kind,
       name: name.trim(),
       amountCents,
       category,
       frequency,
+      interval: configuredInterval,
       startsOn,
       dueDay: configuredDueDay,
       endsOn: endsOn || null,
       isActive: rule?.isActive ?? true,
       isVariable,
-      notes: notes.trim() || null,
+      notes: rule?.notes ?? null,
     };
 
     let saved = false;
@@ -69,82 +89,60 @@ export function RecurringForm({
       await saveRecurringRule(nextRule);
       saved = true;
       if (!rule) {
-        const through = new Date();
-        through.setUTCDate(through.getUTCDate() + 90);
-        const created = await generateOccurrences(nextRule.id, through.toISOString().slice(0, 10));
-        setMessage(`${created} ocorrência(s) gerada(s) para os próximos 90 dias.`);
+        const created = await generateOccurrences(nextRule.id, addDays(today, 90));
+        onSaved(`${nextRule.name}: ${created} ${created === 1 ? "ocorrência criada" : "ocorrências criadas"} para os próximos 90 dias.`);
       } else {
-        setMessage("Regra atualizada. Ocorrências já criadas mantêm seus valores e datas.");
+        onSaved("Recorrência atualizada. Ocorrências já criadas mantêm seus valores.");
       }
-      onSaved?.();
     } catch {
-      setFailed(true);
-      setMessage(saved
-        ? "A regra foi salva, mas não foi possível gerar as ocorrências. Use Gerar próximas para tentar novamente."
-        : "Não foi possível salvar. Os campos continuam preenchidos; tente novamente.");
+      setError(saved
+        ? "A regra foi salva, mas não foi possível gerar as ocorrências. Use “Gerar próximas”."
+        : "Não foi possível salvar. Tente novamente.");
     }
   }
 
   return (
-    <form onSubmit={(event) => void submit(event)} className="grid gap-4 border-y border-[var(--color-border)] py-6 md:grid-cols-2">
-      <label className="block text-sm font-medium">
-        Nome
-        <input name="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={120} className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base" />
-      </label>
-      <label className="block text-sm font-medium">
-        Valor de referência
-        <input name="amount" value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="0,00" required className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base" />
-      </label>
-      <label className="block text-sm font-medium">
-        Categoria
-        <select name="category" value={category} onChange={(event) => setCategory(event.target.value)} required className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base">
-          <option value="" disabled>Selecione</option>
-          <option>Moradia</option>
-          <option>Alimentação</option>
-          <option>Transporte</option>
-          <option>Saúde</option>
-          <option>Contas</option>
-          <option>Assinaturas</option>
-          <option>Outros</option>
-        </select>
-      </label>
-      <label className="block text-sm font-medium">
-        Frequência
-        <select name="frequency" value={frequency} onChange={(event) => setFrequency(event.target.value as FinanceRecurringRule["frequency"])} required className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base">
-          <option value="weekly">Semanal</option>
-          <option value="monthly">Mensal</option>
-          <option value="yearly">Anual</option>
-        </select>
-      </label>
-      <label className="block text-sm font-medium">
-        Data inicial
-        <input name="startsOn" type="date" value={startsOn} onChange={(event) => setStartsOn(event.target.value)} required className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base" />
-      </label>
-      <label className="block text-sm font-medium">
-        Dia do vencimento (mensal/anual)
-        <input name="dueDay" type="number" min={1} max={31} value={dueDay} onChange={(event) => setDueDay(event.target.value)} disabled={frequency === "weekly"} className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base disabled:opacity-50" />
-      </label>
-      <label className="block text-sm font-medium">
-        Data final (opcional)
-        <input name="endsOn" type="date" value={endsOn} onChange={(event) => setEndsOn(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-base" />
-      </label>
-      <label className="flex min-h-11 items-center gap-3 text-sm font-medium md:col-span-2">
-        <input type="checkbox" checked={isVariable} onChange={(event) => setIsVariable(event.target.checked)} className="h-5 w-5 accent-[var(--color-action)]" />
-        O valor pode mudar a cada ocorrência
-      </label>
-      <label className="block text-sm font-medium md:col-span-2">
-        Observação (opcional)
-        <textarea name="notes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={500} rows={2} className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base" />
-      </label>
-      <div className="md:col-span-2">
-        {message ? <p className="mb-3 text-sm" role={failed ? "alert" : "status"}>{message}</p> : null}
-        <div className="flex flex-wrap gap-3">
-        <button disabled={isSaving} className="min-h-11 rounded-full bg-[var(--color-action)] px-5 text-sm font-semibold text-white disabled:opacity-60">
-          {isSaving ? "Salvando..." : rule ? "Salvar regra" : "Salvar recorrência"}
+    <form onSubmit={(event) => void submit(event)} className="space-y-5">
+      <Segmented className="flex w-full" label="Tipo" value={kind} onChange={(value) => { setKind(value); setCategory(""); }} options={[{ value: "expense", label: "Conta a pagar" }, { value: "income", label: "Valor a receber" }]} />
+      <label className={labelClass}>Nome<input value={name} onChange={(event) => setName(event.target.value)} maxLength={120} placeholder={kind === "income" ? "Ex.: Salário" : "Ex.: Aluguel"} className={fieldClass} /></label>
+      <div>
+        <span className="text-sm font-medium">Valor {isVariable ? "de referência" : ""}</span>
+        <button type="button" onClick={() => setEditingAmount(true)} className={`mt-2 flex min-h-12 w-full items-center justify-between rounded-2xl border border-[var(--color-border)] px-4 text-left ${focusRing}`}>
+          <span className={`tabular text-base font-semibold ${amountCents ? "" : "text-[var(--color-muted)]"}`}>{formatCurrency(amountCents, currency)}</span>
+          <span className="text-sm font-semibold text-[var(--color-action)]">{amountCents ? "Alterar" : "Digitar"}</span>
         </button>
-        {onCancel ? <button type="button" onClick={onCancel} className="min-h-11 rounded-full px-4 text-sm font-medium text-[var(--color-muted)] underline underline-offset-4">Cancelar</button> : null}
-        </div>
+        <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
+          <input type="checkbox" checked={isVariable} onChange={(event) => setIsVariable(event.target.checked)} className="h-5 w-5 accent-[var(--color-action)]" />
+          O valor pode mudar a cada vez (ex.: conta de luz)
+        </label>
       </div>
+      <CategoryPicker kind={kind} value={category} onChange={setCategory} />
+      <fieldset>
+        <legend className="text-sm font-medium">Frequência</legend>
+        <Segmented className="mt-2 flex w-full" label="Frequência" value={frequency} onChange={setFrequency} options={[{ value: "weekly", label: "Semanal" }, { value: "monthly", label: "Mensal" }, { value: "yearly", label: "Anual" }]} />
+      </fieldset>
+      <div className="grid grid-cols-2 gap-3">
+        <label className={labelClass}>Repetir a cada
+          <select value={interval} onChange={(event) => setInterval(event.target.value)} className={fieldClass}>
+            {Array.from({ length: 12 }, (_, index) => index + 1).map((value) => (
+              <option key={value} value={value}>{value} {value === 1 ? frequencyLabels[frequency].one : frequencyLabels[frequency].many}</option>
+            ))}
+          </select>
+        </label>
+        <label className={labelClass}>Dia do vencimento
+          <input type="number" min={1} max={31} value={frequency === "weekly" ? "" : dueDay} disabled={frequency === "weekly"} placeholder={frequency === "weekly" ? "Pela data inicial" : ""} onChange={(event) => setDueDay(event.target.value)} className={fieldClass} />
+        </label>
+        <label className={labelClass}>Começa em<input type="date" value={startsOn} onChange={(event) => setStartsOn(event.target.value)} className={fieldClass} /></label>
+        <label className={labelClass}>Termina em (opcional)<input type="date" value={endsOn} onChange={(event) => setEndsOn(event.target.value)} className={fieldClass} /></label>
+      </div>
+      {error ? <p className="text-sm text-[var(--color-error)]" role="alert">{error}</p> : null}
+      <div className="grid grid-cols-2 gap-3 pt-1">
+        <button type="button" onClick={onCancel} className={softButton}>Cancelar</button>
+        <button disabled={isSaving} className={primaryButton}>{isSaving ? "Salvando..." : rule ? "Salvar" : "Criar"}</button>
+      </div>
+      {editingAmount ? (
+        <MoneyKeypad title={name.trim() || "Valor da recorrência"} currency={currency} tone={kind === "income" ? "success" : "action"} initialCents={amountCents || null} submitLabel="Confirmar" closeVariant="back" onSubmit={(cents) => { setAmountCents(cents); setEditingAmount(false); }} onClose={() => setEditingAmount(false)} />
+      ) : null}
     </form>
   );
 }

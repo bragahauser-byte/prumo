@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Finanças pessoais",
-  description: "Organize despesas e compromissos financeiros com clareza.",
+  title: { default: "Prumo — finanças pessoais", template: "%s · Prumo" },
+  description: "Entenda sua situação financeira, planeje o mês e antecipe problemas antes que aconteçam.",
   icons: { icon: "/app-icon.png", apple: "/app-icon.png" },
 };
 

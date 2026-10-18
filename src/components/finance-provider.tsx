@@ -3,10 +3,12 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   createLocalFinanceRepository,
+  type FinanceBudget,
   type FinanceExpense,
   type FinancePreferences,
   type FinanceRecurringRule,
   type FinanceRepository,
+  type FinanceSavingsGoal,
   type FinanceSnapshot,
 } from "@/lib/finance/repository";
 import { createSupabaseFinanceRepository } from "@/lib/finance/supabase-repository";
@@ -27,10 +29,14 @@ export type FinanceContextValue = FinanceSnapshot & {
   saveRecurringRule: (rule: FinanceRecurringRule) => Promise<void>;
   setRecurringRuleActive: (id: string, isActive: boolean) => Promise<void>;
   generateOccurrences: (ruleId: string, throughDate: string) => Promise<number>;
+  saveBudget: (budget: FinanceBudget) => Promise<void>;
+  deleteBudget: (category: string) => Promise<void>;
+  saveSavingsGoal: (goal: FinanceSavingsGoal) => Promise<void>;
+  deleteSavingsGoal: (id: string) => Promise<void>;
 };
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
-const emptySnapshot: FinanceSnapshot = { preferences: null, expenses: [], recurringRules: [] };
+const emptySnapshot: FinanceSnapshot = { preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [] };
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Não foi possível acessar os dados financeiros.";
@@ -66,24 +72,21 @@ export function FinanceProvider({
 
   useEffect(() => {
     let cancelled = false;
-    try {
+    Promise.resolve().then(() => {
       repositoryRef.current = mode === "local"
         ? createLocalFinanceRepository()
         : createSupabaseFinanceRepository(createSupabaseBrowserClient());
-      repositoryRef.current.load().then((loadedSnapshot) => {
-        if (cancelled) return;
-        setSnapshot(loadedSnapshot);
-        setHasLoaded(true);
-        setError(null);
-      }).catch((loadError: unknown) => {
-        if (!cancelled) setError(errorMessage(loadError));
-      }).finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    } catch (loadError) {
-      setError(errorMessage(loadError));
-      setIsLoading(false);
-    }
+      return repositoryRef.current.load();
+    }).then((loadedSnapshot) => {
+      if (cancelled) return;
+      setSnapshot(loadedSnapshot);
+      setHasLoaded(true);
+      setError(null);
+    }).catch((loadError: unknown) => {
+      if (!cancelled) setError(errorMessage(loadError));
+    }).finally(() => {
+      if (!cancelled) setIsLoading(false);
+    });
 
     return () => {
       cancelled = true;
@@ -99,8 +102,8 @@ export function FinanceProvider({
     const newDueToday = dueToday.filter((expense) => !notifiedIds.has(expense.id));
 
     for (const expense of newDueToday) {
-      new Notification(`Vence hoje: ${expense.description}`, {
-        body: "Abra Finanças pessoais para atualizar o pagamento.",
+      new Notification(expense.kind === "income" ? `Previsto para hoje: ${expense.description}` : `Vence hoje: ${expense.description}`, {
+        body: "Abra o Prumo para atualizar o status.",
         icon: "/app-icon.png",
         tag: `expense-${expense.id}-${today}`,
       });
@@ -143,6 +146,10 @@ export function FinanceProvider({
       saveRecurringRule: (rule) => mutate((repository) => repository.saveRecurringRule(rule)),
       setRecurringRuleActive: (id, isActive) => mutate((repository) => repository.setRecurringRuleActive(id, isActive)),
       generateOccurrences: (ruleId, throughDate) => mutate((repository) => repository.generateOccurrences(ruleId, throughDate)),
+      saveBudget: (budget) => mutate((repository) => repository.saveBudget(budget)),
+      deleteBudget: (category) => mutate((repository) => repository.deleteBudget(category)),
+      saveSavingsGoal: (goal) => mutate((repository) => repository.saveSavingsGoal(goal)),
+      deleteSavingsGoal: (id) => mutate((repository) => repository.deleteSavingsGoal(id)),
     }}>
       {children}
     </FinanceContext.Provider>

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useFinance } from "@/components/finance-provider";
 import { parseCurrencyToCents, parseSignedCurrencyToCents } from "@/domain/financial";
 import type { CurrencyCode, FinanceGoal, FinancePreferences } from "@/lib/finance/repository";
+import { todayISO } from "@/lib/dates";
 
 const totalSteps = 8;
 const currencies: { value: CurrencyCode; name: string; symbol: string }[] = [
@@ -73,6 +74,11 @@ export function OnboardingForm({
       displayName: name || null,
       monthlyIncomeCents: incomeCents,
       reportedBalanceCents: balanceCents,
+      balanceReportedOn: balanceCents === null
+        ? null
+        : balanceCents === preferences?.reportedBalanceCents && preferences.balanceReportedOn
+          ? preferences.balanceReportedOn
+          : todayISO(),
       payday: receivedDay,
       currency,
       goals: selectedGoals,
@@ -83,7 +89,7 @@ export function OnboardingForm({
 
     try {
       await savePreferences(nextPreferences);
-      router.replace(returnTo ?? "/overview");
+      router.replace(returnTo ?? (editing ? "/settings" : "/overview"));
     } catch {
       setError("Não foi possível salvar agora. Seus campos continuam preenchidos; tente novamente.");
     }
@@ -117,7 +123,7 @@ export function OnboardingForm({
   if (step === -1) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-white px-6 text-center" aria-label="Preparando o aplicativo">
-        <Image src="/app-icon.png" alt="Finanças pessoais" width={72} height={72} priority />
+        <Image src="/app-icon.png" alt="Prumo" width={72} height={72} priority />
         <LoaderCircle size={24} className="animate-spin text-[var(--color-action)] motion-reduce:animate-none" aria-label="Carregando" />
       </div>
     );
@@ -136,9 +142,9 @@ export function OnboardingForm({
   const description = [
     "Seu nome é opcional e pode ser alterado depois.",
     "Você pode mudar esta preferência quando quiser.",
-    "Opcional. Usada em estimativas junto com as despesas registradas.",
+    "Opcional. Usada para estimar quanto ainda pode gastar no mês.",
     "Opcional. Por exemplo, dia 5.",
-    "Opcional. É um valor informado por você, não consultado no banco.",
+    "Opcional. É um valor informado por você, não consultado no banco. Depois, o que você pagar ou receber ajusta esse saldo.",
     "Escolha uma ou mais opções para personalizar suas prioridades.",
     "Leia como seus dados são tratados antes de continuar.",
     "Opcional. Os avisos aparecem quando você abre o app no dia do vencimento.",
@@ -167,7 +173,7 @@ export function OnboardingForm({
       </div>
 
       <header className="shrink-0 px-6 pb-5 pt-4">
-        <h2 className="max-w-[345px] text-[28px] font-semibold leading-[34px] text-black">{title}</h2>
+        <h2 className="max-w-[345px] text-3xl font-semibold text-black">{title}</h2>
         <p className="mt-3 max-w-[345px] text-base leading-6 text-[#777B80]">{description}</p>
       </header>
 
@@ -232,7 +238,7 @@ export function OnboardingForm({
             <ul className="divide-y divide-[#E8E8E8] border-y border-[#E8E8E8]">
               <li className="flex gap-3 py-4"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black text-white"><Check size={17} /></span><div><h3 className="text-base font-medium">Seus registros são seus</h3><p className="mt-1 text-sm leading-5 text-[#777B80]">No modo local ficam neste navegador. Com Supabase, ficam vinculados à sua conta.</p></div></li>
               <li className="flex gap-3 py-4"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black text-white"><Check size={17} /></span><div><h3 className="text-base font-medium">Sem conexão bancária</h3><p className="mt-1 text-sm leading-5 text-[#777B80]">Renda e saldo são informados por você; não pedimos senha ou dados bancários.</p></div></li>
-              <li className="flex gap-3 py-4"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black text-white"><Check size={17} /></span><div><h3 className="text-base font-medium">Estimativas transparentes</h3><p className="mt-1 text-sm leading-5 text-[#777B80]">Totais usam apenas as despesas registradas e não confirmam saldo bancário.</p></div></li>
+              <li className="flex gap-3 py-4"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black text-white"><Check size={17} /></span><div><h3 className="text-base font-medium">Estimativas transparentes</h3><p className="mt-1 text-sm leading-5 text-[#777B80]">Totais usam apenas o que você registra e não confirmam saldo bancário.</p></div></li>
             </ul>
             <label className="flex cursor-pointer items-start gap-3 text-sm leading-6">
               <input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-[var(--color-action)]" />

@@ -2,25 +2,39 @@
 
 ## Direção visual
 
-Interface utilitária e calma, em português brasileiro, com hierarquia por alinhamento, tipografia e divisores. No desktop, a navegação lateral é estável; no celular, uma barra flutuante translúcida usa cápsulas de seleção, cinco destinos e safe area. A referência visual é adaptada ao conteúdo do produto, sem reproduzir símbolos ou elementos proprietários de outra plataforma.
+Interface calma e utilitária, em português brasileiro. Fundo cinza claro com cartões brancos de cantos generosos (24 px), números grandes e poucos elementos por bloco. No desktop, a navegação lateral é estável; no celular, uma barra flutuante translúcida traz Início, Extrato, o botão central de adicionar, Metas e Relatórios. Agenda, Orçamentos e Ajustes ficam nos atalhos da tela inicial e no avatar.
 
-## Tokens
+Os momentos de colocar dinheiro seguem a lógica "valor primeiro": teclado em tela cheia na cor da ação, número em destaque e um único botão branco. A referência é o padrão de interação, sem reproduzir marca, cores ou elementos proprietários de outra plataforma.
 
-- Fundo: `#F5F5F7`; superfície: `#FFFFFF`.
-- Texto: `#1D1D1F`; texto secundário: `#6E6E73`.
-- Ação: `#0066CC`; borda: `#E5E5EA`.
-- Seleção da navegação: `#EDEDED`; fundo translúcido: branco a 84% com blur e sombra discreta.
-- Sucesso: `#1E8E5A`; atenção: `#D97706`; erro: `#D64545`.
-- A interface atual prioriza tema claro; tema escuro ainda não está implementado.
+## Tokens de cor (`src/app/globals.css`)
 
-## Tipografia e espaçamento
+| Token | Valor | Uso |
+|---|---|---|
+| `--color-bg` / `--color-soft` | `#F5F5F7` | fundo da página, botões suaves |
+| `--color-surface` | `#FFFFFF` | cartões, painéis |
+| `--color-text` | `#1D1D1F` | texto, cartão de metas |
+| `--color-muted` | `#6E6E73` | texto secundário |
+| `--color-border` | `#E5E5EA` | divisores |
+| `--color-action` / `-soft` | `#0066CC` / `#E8F1FB` | ação, gastos, previsto |
+| `--color-success` / `-soft` | `#1E8E5A` / `#E7F4ED` | receitas, recebido, metas |
+| `--color-warning` / `-soft` | `#D97706` / `#FDF1E2` | orçamento a 80%, vence hoje |
+| `--color-error` / `-soft` | `#D64545` / `#FBEAEA` | atrasado, acima do limite |
 
-Usa Geist via `next/font`, com escala de interface em 12, 14, 16, 20, 24, 28 e 32 px; os rótulos compactos da barra mobile usam 10 px para acomodar cinco destinos. Espaçamentos seguem múltiplos de 4 px. Valores importantes usam 24 ou 28 px; metadados pequenos têm contraste secundário adequado.
+Tons derivados: verdes do anel de metas (`goalShades`) e azul claro `#7FB2E5` para gastos variáveis.
 
-## Controles e acessibilidade
+## Tipografia
 
-Estados vazios centralizam título e descrição em fundo branco, com ação primária em cápsula azul quando aplicável. Ações principais são arredondadas; a ação de adicionar vira botão de ícone de 44 px no celular, com nome acessível e tooltip nativo.
+Geist via `next/font`. Escala única: **12, 14, 16, 20, 24, 28 e 32 px** (`text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl`, `text-4xl`; `text-lg` foi redefinido para 20 px). Títulos de página usam 28 px; valores de destaque, 32 px; números usam algarismos tabulares (`.tabular`).
 
-Campos têm labels semânticos, altura mínima confortável, foco visível e mensagens `role=status`/`role=alert`. A barra mobile destaca aba ativa em cinza claro e azul, respeita `env(safe-area-inset-bottom)` e evita rolagem horizontal. Animações respeitam `prefers-reduced-motion`.
+## Ícones e ilustrações
 
-Componentes existentes são EmptyState, formulários de despesa/recorrência/configurações e navegação. Outros componentes só devem ser extraídos quando reutilizados.
+- **Ícones de linha** (`public/icons/*.svg`): categorias e metas, aplicados como máscara (`MaskIcon`) para herdar a cor do token. Complementados por Lucide quando não há equivalente.
+- **Ilustrações isométricas 3D** (`public/illustrations/*.png`, geradas em bnbicons.com): listadas em `src/components/ui/illustration.tsx`. Enquanto o arquivo não existir, o componente mostra um bloco neutro com o ícone de linha. Para ativar uma ilustração, coloque o PNG com o nome indicado e adicione o nome em `availableIllustrations`.
+
+## Componentes
+
+`Card`, `TileLink`, `Segmented`, `Meter`, `SectionHeader` e classes de botão (`primitives.tsx`); `MoneyKeypad`; `Sheet` (folha inferior no celular, diálogo no desktop); `ProgressRing`; `StatusChip`; `CategoryIcon`/`GoalIcon`; `ColumnChart`; `TransactionRow`.
+
+## Acessibilidade
+
+Labels semânticos, foco visível, `role=status`/`role=alert` nas mensagens, alvos de toque ≥ 44 px, teclado físico no `MoneyKeypad` (dígitos, vírgula, Backspace, Enter, Esc), gráfico com tabela equivalente, nenhuma informação só por cor (chips têm texto) e animações que respeitam `prefers-reduced-motion`. Sem diálogos nativos do navegador: exclusões pedem confirmação inline.

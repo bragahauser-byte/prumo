@@ -8,20 +8,36 @@
   --color-muted: #6e6e73;
   --color-border: #e5e5ea;
   --color-action: #0066cc;
+  --color-action-pressed: #0055aa;
+  --color-action-soft: #e8f1fb;
   --color-nav-glass: rgba(255, 255, 255, 0.84);
   --color-nav-selection: #ededed;
   --color-success: #1e8e5a;
+  --color-success-soft: #e7f4ed;
   --color-warning: #d97706;
+  --color-warning-soft: #fdf1e2;
   --color-error: #d64545;
+  --color-error-soft: #fbeaea;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+ * Escala tipográfica do produto: 12, 14, 16, 20, 24, 28 e 32 px.
+ * text-xs=12 · text-sm=14 · text-base=16 · text-xl=20 · text-2xl=24 · text-3xl=28 · text-4xl=32.
+ * text-lg é redefinido para 20 px para que nenhum tamanho fora da escala apareça.
+ */
 @theme inline {
   --color-background: var(--color-bg);
   --color-foreground: var(--color-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-3xl: 1.75rem;
+  --text-3xl--line-height: 2.125rem;
+  --text-4xl: 2rem;
+  --text-4xl--line-height: 2.5rem;
 }
 
 * {
@@ -42,13 +58,47 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
 img {
   max-width: 100%;
   display: block;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes amount-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes amount-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.animate-sheet-in {
+  animation: sheet-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.animate-amount-bump {
+  animation: amount-bump 160ms ease-out;
+}
+
+.animate-amount-shake {
+  animation: amount-shake 200ms ease-in-out 2;
 }
 
 @media (prefers-reduced-motion: reduce) {

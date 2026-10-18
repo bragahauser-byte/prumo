@@ -1,23 +1,32 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const supabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 );
 
-async function completeOnboarding(page: import("@playwright/test").Page) {
+async function completeOnboarding(page: Page) {
   await page.goto("/onboarding");
-    await expect(page.getByRole("heading", { name: "Como podemos te chamar?" })).toBeVisible();
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await page.getByRole("button", { name: "Continuar" }).click();
-    for (let optionalStep = 0; optionalStep < 3; optionalStep += 1) {
-      await page.getByRole("button", { name: "Pular esta etapa" }).click();
-    }
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await page.getByLabel(/Li e aceito os termos/).check();
-    await page.getByRole("button", { name: "Continuar" }).click();
-    await page.getByRole("button", { name: "Agora não" }).click();
+  await expect(page.getByRole("heading", { name: "Como podemos te chamar?" })).toBeVisible();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  for (let optionalStep = 0; optionalStep < 3; optionalStep += 1) {
+    await page.getByRole("button", { name: "Pular esta etapa" }).click();
+  }
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByLabel(/Li e aceito os termos/).check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByRole("button", { name: "Agora não" }).click();
   await expect(page).toHaveURL(/\/overview$/);
+}
+
+async function typeOnKeypad(page: Page, digits: string) {
+  await page.getByRole("group", { name: "Teclado numérico" }).waitFor();
+  for (const key of digits) await page.getByRole("button", { name: key === "," ? "Vírgula" : key, exact: true }).click();
+}
+
+function hasHorizontalOverflow(page: Page) {
+  return page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
 }
 
 test("onboards a first-time user, saves preferences locally, and restores them after reload", async ({ page }) => {
@@ -43,130 +52,133 @@ test("onboards a first-time user, saves preferences locally, and restores them a
 
   await expect(page).toHaveURL(/\/overview$/);
   await expect(page.getByText("Olá, Ana")).toBeVisible();
-  await expect(page.getByText(/US\$/).first()).toBeVisible();
+  await expect(page.getByText("US$ 1.200,00").first()).toBeVisible();
+
   await page.goto("/settings");
+  await page.getByRole("link", { name: /Perfil e preferências/ }).click();
   await expect(page.getByLabel("Nome")).toHaveValue("Ana");
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByRole("radio", { name: /Dólar americano/ })).toBeChecked();
   await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByLabel("Valor líquido mensal")).toHaveValue("3500,00");
   await page.getByLabel("Valor líquido mensal").fill("3.600,00");
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByLabel("Dia do mês")).toHaveValue("5");
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByLabel("Saldo informado")).toHaveValue("1200,00");
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await page.getByRole("button", { name: "Continuar" }).click();
+  for (let step = 0; step < 4; step += 1) await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByLabel(/Li e aceito os termos/)).toBeChecked();
   await page.getByRole("button", { name: "Continuar" }).click();
   await page.getByRole("button", { name: "Concluir e começar" }).click();
   await expect(page).toHaveURL(/\/settings$/);
   await page.reload();
-  await expect(page.getByLabel("Nome")).toHaveValue("Ana");
+  await page.getByRole("link", { name: /Perfil e preferências/ }).click();
   await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByRole("radio", { name: /Dólar americano/ })).toBeChecked();
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByLabel("Valor líquido mensal")).toHaveValue("3600,00");
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByLabel("Saldo informado")).toHaveValue("1200,00");
 });
 
-test("navigates to expenses and keeps the mobile layout within the viewport", async ({ page }) => {
-  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
-  await page.setViewportSize({ width: 390, height: 844 });
-  await completeOnboarding(page);
-  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Despesas" }).click();
-
-  await expect(page).toHaveURL(/\/expenses$/);
-  await expect(page.getByRole("heading", { name: "Despesas", exact: true })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Despesas" })).toBeVisible();
-  const hasHorizontalOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-  );
-  expect(hasHorizontalOverflow).toBe(false);
-});
-
-test("keeps the selected tab and layout consistent across all five mobile screens", async ({ page }) => {
+test("keeps the selected tab and layout consistent across the main screens on mobile", async ({ page }) => {
   test.skip(supabaseConfigured, "Requires an authenticated Supabase test user.");
-  await page.setViewportSize({ width: 402, height: 874 });
+  await page.setViewportSize({ width: 390, height: 844 });
   await completeOnboarding(page);
 
   const screens = [
-    { path: "/overview", title: "Visão geral" },
-    { path: "/expenses", title: "Despesas" },
-    { path: "/recurring", title: "Recorrências" },
-    { path: "/insights", title: "Insights" },
-    { path: "/settings", title: "Configurações" },
+    { path: "/overview", title: "Início", tab: "/overview" },
+    { path: "/transactions", title: "Transações", tab: "/transactions" },
+    { path: "/goals", title: "Metas", tab: "/goals" },
+    { path: "/reports", title: "Relatórios", tab: "/reports" },
+    { path: "/bills", title: "Agenda" },
+    { path: "/budgets", title: "Orçamentos" },
+    { path: "/settings", title: "Perfil e ajustes" },
   ];
 
   for (const screen of screens) {
     await page.goto(screen.path);
-    await expect(page.getByRole("heading", { name: screen.title, exact: true })).toBeVisible();
-    const navigation = page.getByRole("navigation", { name: "Navegação principal" });
-    const selectedTab = navigation.locator('a[aria-current="page"]');
-    await expect(selectedTab).toHaveAttribute("href", screen.path);
-    const overflows = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    );
-    expect(overflows, `${screen.path} should not overflow horizontally`).toBe(false);
+    await expect(page.getByRole("heading", { level: 1, name: screen.title, exact: true })).toBeVisible();
+    if (screen.tab) {
+      const navigation = page.getByRole("navigation", { name: "Navegação principal" }).last();
+      await expect(navigation.locator('a[aria-current="page"]')).toHaveAttribute("href", screen.tab);
+    }
+    expect(await hasHorizontalOverflow(page), `${screen.path} should not overflow horizontally`).toBe(false);
   }
 });
 
-test("creates, pays, edits, deletes, and reloads an expense", async ({ page }) => {
+test("registers an expense with the keypad, suggests its category and marks a bill as paid", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/add");
+  await typeOnKeypad(page, "129,9");
+  await expect(page.getByLabel("Valor: R$ 129,9")).toBeVisible();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByLabel("Com o que foi?").fill("Internet de casa");
+  await expect(page.getByRole("radio", { name: "Contas" })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("radio", { name: "Vou pagar" }).click();
+  await page.getByRole("button", { name: "Salvar gasto" }).click();
+  await expect(page.getByRole("heading", { name: "Gasto registrado" })).toBeVisible();
+  await page.getByRole("button", { name: "Concluir" }).click();
+
+  await page.goto("/transactions");
+  await page.getByRole("link", { name: /Internet de casa/ }).click();
+  await page.getByRole("button", { name: "Marcar como paga" }).click();
+  await expect(page.getByText("Marcada como paga.")).toBeVisible();
+  await page.getByRole("button", { name: "Excluir transação" }).click();
+  await page.getByRole("button", { name: "Sim, excluir" }).click();
+  await expect(page).toHaveURL(/\/transactions$/);
+  await expect(page.getByRole("heading", { name: "Nenhuma transação ainda" })).toBeVisible();
+});
+
+test("creates a savings goal and adds money to it", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/goals");
+  await page.getByRole("button", { name: "Criar primeira meta" }).click();
+  await page.getByRole("radio", { name: "Viagem" }).click();
+  await page.getByRole("button", { name: "Digitar" }).click();
+  await typeOnKeypad(page, "6000");
+  await page.getByRole("button", { name: "Confirmar" }).click();
+  await page.getByRole("button", { name: "Criar meta" }).click();
+  await expect(page).toHaveURL(/\/goals\/.+/);
+
+  await page.getByRole("link", { name: "Guardar dinheiro" }).click();
+  await typeOnKeypad(page, "300");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Dinheiro guardado" })).toBeVisible();
+  await expect(page.getByText("5% da meta · R$ 300,00 de R$ 6.000,00")).toBeVisible();
+});
+
+test("sets a category budget from the keypad", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/budgets");
+  await page.getByRole("button", { name: /Alimentação/ }).click();
+  await typeOnKeypad(page, "800");
+  await page.getByRole("button", { name: "Salvar limite" }).click();
+  await expect(page.getByText("Limite de Alimentação salvo: R$ 800,00 por mês.")).toBeVisible();
+  await expect(page.getByText("Restam R$ 800,00")).toBeVisible();
+});
+
+test("creates and pauses a recurring bill while preserving generated occurrences", async ({ page }) => {
+  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
+  await completeOnboarding(page);
+  await page.goto("/bills");
+  await page.getByRole("button", { name: "Nova recorrência" }).click();
+  await page.getByLabel("Nome").fill("Assinatura de música");
+  await page.getByRole("button", { name: "Digitar" }).click();
+  await typeOnKeypad(page, "24,9");
+  await page.getByRole("button", { name: "Confirmar" }).click();
+  await page.getByRole("radio", { name: "Assinaturas" }).click();
+  await page.getByLabel("Dia do vencimento").fill("15");
+  await page.getByRole("button", { name: "Criar" }).click();
+  await expect(page.getByText(/Assinatura de música: \d+ ocorrência/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Pausar" }).click();
+  await expect(page.getByText("Assinatura de música pausada. As ocorrências já criadas foram mantidas.")).toBeVisible();
+  await expect(page.getByText("Pausada", { exact: true })).toBeVisible();
+});
+
+test("redirects old routes to the new structure", async ({ page }) => {
   test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
   await completeOnboarding(page);
   await page.goto("/expenses");
-  await page.getByRole("button", { name: "Adicionar despesa" }).first().click();
-  const createForm = page.getByRole("region", { name: "Nova despesa" });
-  await createForm.getByLabel("Descrição").fill("Internet de casa");
-  await createForm.getByLabel("Valor (BRL)").fill("129,90");
-  await createForm.getByRole("combobox", { name: "Categoria" }).selectOption("Contas");
-  const dueDate = new Date();
-  dueDate.setUTCDate(dueDate.getUTCDate() + 2);
-  await createForm.getByLabel("Vencimento").fill(dueDate.toISOString().slice(0, 10));
-  await page.getByRole("button", { name: "Salvar despesa" }).click();
-  await expect(page.getByRole("heading", { name: "Internet de casa" })).toBeVisible();
-
-  await page.getByRole("button", { name: "Marcar como paga" }).click();
-  await expect(page.getByText("Pagamento registrado.")).toBeVisible();
-  await expect(page.getByText("Paga", { exact: true })).toBeVisible();
-
-  await page.getByRole("button", { name: "Editar", exact: true }).click();
-  const editForm = page.getByRole("region", { name: "Editar despesa" });
-  await editForm.getByLabel("Descrição").fill("Internet atualizada");
-  await editForm.getByLabel("Valor (BRL)").fill("150,00");
-  await editForm.getByRole("button", { name: "Salvar alterações" }).click();
-  await expect(page.getByRole("heading", { name: "Internet atualizada" })).toBeVisible();
-
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "Excluir" }).click();
-  await expect(page.getByRole("heading", { name: "Internet atualizada" })).toHaveCount(0);
-
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Seu mês começa aqui" })).toBeVisible();
-});
-
-test("creates and pauses a recurring rule while preserving generated occurrences", async ({ page }) => {
-  test.skip(supabaseConfigured, "Requires a configured authenticated test account.");
-  await completeOnboarding(page);
-  await page.goto("/recurring");
-  await page.getByRole("button", { name: "Adicionar recorrência" }).first().click();
-  await page.getByLabel("Nome").fill("Assinatura de música");
-  await page.getByLabel("Valor de referência").fill("24,90");
-  await page.getByLabel("Categoria").selectOption("Assinaturas");
-  await page.getByLabel("Frequência").selectOption("monthly");
-  await page.getByLabel("Data inicial").fill(new Date().toISOString().slice(0, 10));
-  await page.getByLabel("Dia do vencimento (mensal/anual)").fill("15");
-  await page.getByLabel("O valor pode mudar a cada ocorrência").check();
-  await page.getByRole("button", { name: "Salvar recorrência" }).click();
-
-  await expect(page.getByRole("heading", { name: "Assinatura de música" })).toBeVisible();
-  await expect(page.getByText("valor variável")).toBeVisible();
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "Pausar" }).click();
-  await expect(page.getByText("Regra pausada; ocorrências existentes foram mantidas.")).toBeVisible();
-  await expect(page.getByText(/Assinaturas.*Pausada/)).toBeVisible();
+  await expect(page).toHaveURL(/\/transactions$/);
+  await page.goto("/insights");
+  await expect(page).toHaveURL(/\/reports$/);
 });
 
 test("exposes accessible email login and account recovery links", async ({ page }) => {

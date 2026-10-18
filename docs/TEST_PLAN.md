@@ -19,3 +19,8 @@
 - Domain money calculations remain in integer cents and deterministic date tests pass.
 - All persisted reads and writes are owner-scoped in both Server Actions and PostgreSQL RLS.
 - Production acceptance requires passing database and browser tests against configured Supabase, not only a successful build.
+
+## Cobertura atual
+
+- Unitários (Vitest): regras de dinheiro e recorrência (inclusive intervalos personalizados), cálculos de planejamento (saldo, quanto pode gastar, orçamento, metas, aumentos incomuns, séries), sugestão de categoria, teclado de valores e repositório local (inclusive leitura de dados antigos).
+- E2E (Playwright, modo local): onboarding e edição de preferências, navegação e ausência de rolagem horizontal no celular, registro de gasto pelo teclado com categoria sugerida, pagamento e exclusão, criação de meta e aporte, limite de orçamento, recorrência e pausa, redirecionamento das rotas antigas.

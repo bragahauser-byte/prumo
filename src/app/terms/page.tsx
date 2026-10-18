@@ -6,13 +6,13 @@ export default function TermsPage() {
       <Link href="/onboarding" className="inline-flex h-11 items-center gap-2 rounded-full bg-[#F1F1F1] px-4 text-sm font-medium text-black">
         Voltar ao onboarding
       </Link>
-      <h1 className="mt-8 text-[28px] font-semibold leading-[34px]">Termos de uso</h1>
+      <h1 className="mt-8 text-3xl font-semibold">Termos de uso</h1>
       <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">Última atualização: 10 de outubro de 2026</p>
 
       <div className="mt-8 space-y-7 text-sm leading-6">
         <section>
           <h2 className="font-semibold">Uso do aplicativo</h2>
-          <p className="mt-2">Finanças pessoais ajuda você a registrar e organizar despesas e compromissos. Você decide quais informações registrar e é responsável por mantê-las corretas.</p>
+          <p className="mt-2">O Prumo ajuda você a registrar e organizar receitas, despesas, orçamentos, metas e compromissos. Ele não movimenta dinheiro nem se conecta a bancos. Você decide quais informações registrar e é responsável por mantê-las corretas.</p>
         </section>
         <section>
           <h2 className="font-semibold">Armazenamento dos seus dados</h2>

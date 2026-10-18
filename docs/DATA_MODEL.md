@@ -1,8 +1,8 @@
 # Data Model
 
-`src/lib/finance/repository.ts` defines the product data contract. In local mode, a versioned `localStorage` record stores only the user's preferences, expenses, and recurring rules; an empty browser starts with empty arrays and no financial records. Local data is device/browser-specific and is not cloud synchronization.
+`src/lib/finance/repository.ts` defines the product data contract. In local mode, a versioned `localStorage` record stores only the user's preferences, transactions (table/type still named `expenses`), recurring rules, budgets, and savings goals; an empty browser starts with empty arrays and no financial records. Local data is device/browser-specific and is not cloud synchronization.
 
-When Supabase is configured, `src/lib/finance/supabase-repository.ts` implements the same contract using the authenticated browser client. The migrations create `profiles`, `recurring_rules`, and `expenses` in the exposed `public` schema. Auth identity is the owner key (`user_id`); an Auth trigger/backfill creates profiles. Categories are constrained text values rather than a user-editable table.
+When Supabase is configured, `src/lib/finance/supabase-repository.ts` implements the same contract using the authenticated browser client. The migrations create `profiles`, `recurring_rules`, `expenses`, `budgets`, `savings_goals`, and `goal_contributions` in the exposed `public` schema. Auth identity is the owner key (`user_id`); an Auth trigger/backfill creates profiles. Categories are constrained text values rather than a user-editable table.
 
 ## Money and dates
 
@@ -29,3 +29,12 @@ When Supabase is configured, `src/lib/finance/supabase-repository.ts` implements
 - Checks constrain status, payment date, frequency, schedule day, and date ranges.
 - RLS is enabled on every table; grants are explicitly revoked from `anon` and restricted to required operations for `authenticated`.
 - Policies compare `user_id` to `(select auth.uid())`; indexes support owner/date and owner/active queries.
+
+## Receitas, orçamentos e metas (migração `20261018000000_planning.sql`)
+
+- `expenses.kind` and `recurring_rules.kind` are `'expense' | 'income'` (default `'expense'`). A trigger copies the rule's kind into generated occurrences. Status `paid` means "pago" for expenses and "recebido" for incomes.
+- `recurring_rules.interval_count` (1–12) supports "a cada N semanas/meses/anos"; local and SQL generators align occurrences to the start date.
+- `profiles.balance_reported_on` records when the balance was informed; settled movements from that date on adjust the displayed balance.
+- `budgets` has one monthly limit per `(user_id, category)`.
+- `savings_goals` holds target, optional deadline and icon; `goal_contributions` holds `planned` or `done` contributions and cascades on goal deletion. Contributions never move money.
+- Local data saved before these fields existed is read with defaults (`kind = expense`, `interval = 1`, empty budgets and goals).

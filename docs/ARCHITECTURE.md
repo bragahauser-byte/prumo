@@ -3,8 +3,8 @@
 ## Runtime boundaries
 
 - `src/app`: App Router pages, layouts, Auth callback, and Server Actions.
-- `src/components`: reusable presentation and small client forms using React `useActionState`.
-- `src/domain`: pure money/date/recurrence rules; monetary values use integer cents.
+- `src/components`: screens (`*-screen.tsx`), flows (`add-flow.tsx`), forms and the UI kit in `src/components/ui`. `use-finance-summary.ts` derives shared values for every screen.
+- `src/domain`: pure money/date/recurrence rules, categories and planning calculations (`planning.ts`: balance, spendable amount, budgets, goals, reports); monetary values use integer cents.
 - `src/lib/finance/repository.ts`: common repository interface, localStorage adapter, validation, and local recurrence generation.
 - `src/lib/finance/supabase-repository.ts`: authenticated Supabase adapter implementing the same repository interface.
 - `src/components/finance-provider.tsx`: selects the persistence mode once and exposes loading/error/mutation state to screens.
