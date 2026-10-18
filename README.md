@@ -76,9 +76,15 @@ Regras de cálculo em [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md).
 
 Mais em [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md).
 
-## Stack
+## Tecnologias
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Supabase (Auth + PostgreSQL com RLS, opcional) · Zod · Lucide · Vitest · Playwright
+| Tecnologia | Papel |
+|---|---|
+| **TypeScript + React + Next.js** | Interface e aplicação web (Next.js 16 com App Router, React 19). |
+| **CSS + Tailwind CSS** | Estilização e responsividade, com tokens de cor e tipografia (Tailwind CSS 4). |
+| **Supabase + PostgreSQL** | Login e sincronização opcionais, com regras de acesso por usuário (RLS) nas tabelas. |
+
+Também: Zod (validação), Lucide (ícones), Vitest e Playwright (testes).
 
 ## Como rodar
 

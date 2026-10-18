@@ -1,3 +1,7 @@
 * text=auto eol=lf
 *.png binary
 *.ico binary
+
+# Barra "Languages" do GitHub: scripts de build e configs ficam fora da contagem.
+scripts/** linguist-detectable=false
+*.mjs linguist-detectable=false
