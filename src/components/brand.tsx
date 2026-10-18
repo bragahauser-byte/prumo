@@ -29,9 +29,9 @@ export function CompassMark({ size = 138, color = "var(--color-bright-green)" }:
 }
 
 /** Tela de carregamento: fundo quase preto e a bússola em verde vivo. */
-export function LoadingScreen({ label = "Carregando o Prumo" }: { label?: string }) {
+export function LoadingScreen({ label = "Carregando o Prumo", className = "" }: { label?: string; className?: string }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F0F0F]" role="status" aria-live="polite">
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#0F0F0F] ${className}`} role="status" aria-live="polite">
       <CompassMark />
       <span className="sr-only">{label}</span>
     </div>

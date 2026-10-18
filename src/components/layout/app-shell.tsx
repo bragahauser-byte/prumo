@@ -137,6 +137,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
 
+      {/* Véu branco com desfoque atrás da barra: o conteúdo some suavemente ao passar por baixo dela. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-[calc(148px+env(safe-area-inset-bottom))] bg-gradient-to-t from-white via-white/85 to-white/0 backdrop-blur-[6px] [mask-image:linear-gradient(to_top,black_55%,transparent)] lg:hidden" />
       <nav aria-label="Navegação principal" className="fixed inset-x-4 bottom-[max(40px,env(safe-area-inset-bottom))] z-30 mx-auto max-w-[440px] lg:hidden">
         <div className="flex h-[68px] items-center gap-1 rounded-full border border-white/80 bg-[var(--color-nav-glass)] p-1.5 shadow-[0_8px_40px_rgba(14,15,12,0.14)] backdrop-blur-xl">
           {mobileNavigation.slice(0, 2).map((item) => <MobileNavLink key={item.href} item={item} active={isActiveRoute(pathname, item.href)} />)}

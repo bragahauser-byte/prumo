@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useFinance } from "@/components/finance-provider";
+import { SplashScreen } from "@/components/splash-screen";
 import { MoneyInput } from "@/components/ui/money-input";
 import { useToast } from "@/components/ui/toast";
 import { focusRing, inkButton, outlineButton } from "@/components/ui/primitives";
@@ -161,6 +162,7 @@ export function OnboardingForm({
     const secondary = "flex min-h-14 w-full items-center justify-center rounded-full border border-[var(--color-forest-green)] text-base font-semibold text-[var(--color-forest-green)] transition-colors hover:bg-[var(--color-soft)] " + focusRing;
     return (
       <div className="flex min-h-dvh flex-col bg-white px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-20">
+        <SplashScreen />
         <h1 className="text-4xl font-semibold leading-[38px] tracking-[-0.02em] text-[#0F0F0F]">Seu próximo passo começa aqui.</h1>
         <div className="flex flex-1 items-center justify-center py-8">
           <Image src={asset("/illustrations/welcome.png")} alt="" width={313} height={313} priority draggable={false} className="h-auto w-full max-w-[313px] select-none" />
