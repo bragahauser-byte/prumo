@@ -4,12 +4,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function signOutAction() {
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}
-
 export async function updatePasswordAction(formData: FormData) {
   const password = z.string().min(8).max(72).safeParse(formData.get("password"));
   if (!password.success) redirect("/settings/password?error=invalid");

@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { TransactionKind } from "@/domain/categories";
+import { asset } from "@/lib/base-path";
 
 type IconSource = { svg: string } | { lucide: LucideIcon };
 
@@ -43,7 +44,7 @@ export const goalIcons: { value: string; label: string; svg: string }[] = [
 
 /** Ícone de linha (SVG em /public/icons) aplicado como máscara para herdar a cor do texto. */
 export function MaskIcon({ name, size = 24, className = "" }: { name: string; size?: number; className?: string }) {
-  const url = `url(/icons/${name}.svg)`;
+  const url = `url(${asset(`/icons/${name}.svg`)})`;
   return (
     <span
       aria-hidden="true"

@@ -9,6 +9,7 @@ import { useFinance } from "@/components/finance-provider";
 import { parseCurrencyToCents, parseSignedCurrencyToCents } from "@/domain/financial";
 import type { CurrencyCode, FinanceGoal, FinancePreferences } from "@/lib/finance/repository";
 import { todayISO } from "@/lib/dates";
+import { asset } from "@/lib/base-path";
 
 const totalSteps = 8;
 const currencies: { value: CurrencyCode; name: string; symbol: string }[] = [
@@ -123,7 +124,7 @@ export function OnboardingForm({
   if (step === -1) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-white px-6 text-center" aria-label="Preparando o aplicativo">
-        <Image src="/app-icon.png" alt="Prumo" width={72} height={72} priority />
+        <Image src={asset("/app-icon.png")} alt="Prumo" width={72} height={72} priority />
         <LoaderCircle size={24} className="animate-spin text-[var(--color-action)] motion-reduce:animate-none" aria-label="Carregando" />
       </div>
     );

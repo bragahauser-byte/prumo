@@ -18,6 +18,7 @@ import {
 import type { ReactNode } from "react";
 import { useFinance } from "@/components/finance-provider";
 import { focusRing } from "@/components/ui/primitives";
+import { asset } from "@/lib/base-path";
 
 type NavigationItem = { href: string; label: string; mobileLabel?: string; title?: string; icon: LucideIcon; mobile?: boolean };
 
@@ -96,7 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="mx-auto flex min-h-dvh max-w-[1280px] gap-10 px-4 pb-[calc(116px+env(safe-area-inset-bottom))] pt-[max(env(safe-area-inset-top),20px)] sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
         <aside className="sticky top-10 hidden h-[calc(100dvh-5rem)] w-60 shrink-0 flex-col lg:flex">
           <Link href="/overview" className={`mb-8 flex items-center gap-3 rounded-2xl px-3 py-1 ${focusRing}`}>
-            <Image src="/app-icon.png" alt="" width={36} height={36} className="rounded-[10px]" />
+            <Image src={asset("/app-icon.png")} alt="" width={36} height={36} className="rounded-[10px]" />
             <span className="text-xl font-semibold">Prumo</span>
           </Link>
           <Link href="/add" className={`mb-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-action)] px-5 text-base font-semibold text-white transition-colors hover:bg-[var(--color-action-pressed)] ${focusRing}`}>

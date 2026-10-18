@@ -133,7 +133,7 @@ test("creates a savings goal and adds money to it", async ({ page }) => {
   await typeOnKeypad(page, "6000");
   await page.getByRole("button", { name: "Confirmar" }).click();
   await page.getByRole("button", { name: "Criar meta" }).click();
-  await expect(page).toHaveURL(/\/goals\/.+/);
+  await expect(page).toHaveURL(/\/goals\/detail\?id=.+/);
 
   await page.getByRole("link", { name: "Guardar dinheiro" }).click();
   await typeOnKeypad(page, "300");

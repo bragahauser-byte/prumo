@@ -1,5 +1,15 @@
 # Deployment
 
+## GitHub Pages (versão pública atual)
+
+- Endereço: https://bragahauser-byte.github.io/prumo/
+- Workflow: `.github/workflows/pages.yml`, a cada push na `main` (ou manual em Actions).
+- Passos: `npm ci` → `npm test` → `scripts/prepare-pages.mjs` (remove login Supabase, Server Actions, rota de callback e proxy da cópia do CI) → `next build` com `DEPLOY_TARGET=pages` (`output: "export"`, `basePath: /prumo`, `trailingSlash`) → `scripts/flatten-rsc-segments.mjs` (cria os nomes de arquivo de pré-carregamento que o navegador pede) → publicação do diretório `out`.
+- Em Settings → Pages, a origem precisa ser **GitHub Actions**.
+- Arquivos de `public/` devem ser referenciados com `asset()` (`src/lib/base-path.ts`) para respeitar o prefixo `/prumo`.
+
+## Servidor Next com Supabase
+
 ## Supabase
 
 1. Create a Supabase project and copy its Project URL and publishable key.

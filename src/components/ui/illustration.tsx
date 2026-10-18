@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { MaskIcon } from "@/components/ui/category-icon";
+import { asset } from "@/lib/base-path";
 
 /**
  * Ilustrações isométricas 3D (geradas em bnbicons.com) ficam em /public/illustrations/<nome>.png.
@@ -40,7 +41,7 @@ export function Illustration({
   className?: string;
 }) {
   if (availableIllustrations.has(name)) {
-    return <Image src={`/illustrations/${name}.png`} alt="" width={size} height={size} className={`shrink-0 object-contain ${className}`} aria-hidden="true" />;
+    return <Image src={asset(`/illustrations/${name}.png`)} alt="" width={size} height={size} className={`shrink-0 object-contain ${className}`} aria-hidden="true" />;
   }
 
   return (

@@ -62,7 +62,7 @@ export function TransactionRow({
 
   return (
     <li className="flex items-center gap-3 py-3">
-      <Link href={`/transactions/${transaction.id}`} className={`flex min-w-0 flex-1 items-center gap-3 rounded-2xl ${focusRing}`}>
+      <Link href={`/transactions/detail?id=${transaction.id}`} className={`flex min-w-0 flex-1 items-center gap-3 rounded-2xl ${focusRing}`}>
         <CategoryIcon category={transaction.category} kind={transaction.kind} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-base font-medium">{transaction.description}</span>

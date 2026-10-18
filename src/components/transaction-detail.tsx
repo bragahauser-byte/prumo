@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ChevronLeft, Repeat } from "lucide-react";
 import { CategoryPicker } from "@/components/category-picker";
@@ -17,7 +17,7 @@ import type { FinanceExpense } from "@/lib/finance/repository";
 import { formatCalendarDate, formatCurrency } from "@/lib/formatting";
 
 export function TransactionDetail() {
-  const { id } = useParams<{ id: string }>();
+  const id = useSearchParams().get("id");
   const router = useRouter();
   const { expenses, recurringRules, preferences, setExpenseStatus, deleteExpense, isSaving } = useFinance();
   const transaction = expenses.find((item) => item.id === id);

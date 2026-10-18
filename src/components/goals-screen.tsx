@@ -50,7 +50,7 @@ export function GoalsScreen() {
               <ul className="mt-4 divide-y divide-white/10">
                 {goals.map(({ goal, progress, color }) => (
                   <li key={goal.id}>
-                    <Link href={`/goals/${goal.id}`} className="flex min-h-12 items-center gap-3 rounded-xl py-2 focus-visible:outline-2 focus-visible:outline-white">
+                    <Link href={`/goals/detail?id=${goal.id}`} className="flex min-h-12 items-center gap-3 rounded-xl py-2 focus-visible:outline-2 focus-visible:outline-white">
                       <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
                       <span className="min-w-0 flex-1 truncate text-base">{goal.name}</span>
                       <span className="tabular text-sm text-white/80">{Math.round(progress.ratio * 100)}%</span>
@@ -78,7 +78,7 @@ export function GoalsScreen() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {goals.map(({ goal, progress }) => (
             <article key={goal.id} className="flex flex-col rounded-3xl bg-white p-5">
-              <Link href={`/goals/${goal.id}`} className={`flex items-start gap-4 rounded-2xl ${focusRing}`}>
+              <Link href={`/goals/detail?id=${goal.id}`} className={`flex items-start gap-4 rounded-2xl ${focusRing}`}>
                 <Illustration name={goalIllustration(goal.icon)} size={72} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-base font-semibold">{goal.name}</span>
@@ -108,7 +108,7 @@ export function GoalsScreen() {
 
       {creating ? (
         <Sheet title="Nova meta" description="Defina o objetivo, o valor e, se quiser, um prazo." onClose={() => setCreating(false)}>
-          <GoalForm currency={currency} onCancel={() => setCreating(false)} onSaved={(goal) => { setCreating(false); router.push(`/goals/${goal.id}`); }} />
+          <GoalForm currency={currency} onCancel={() => setCreating(false)} onSaved={(goal) => { setCreating(false); router.push(`/goals/detail?id=${goal.id}`); }} />
         </Sheet>
       ) : null}
     </div>

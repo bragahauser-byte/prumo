@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronRight, KeyRound, LogOut, ShieldCheck, SlidersHorizontal, Wallet } from "lucide-react";
 import { useState } from "react";
 import { useFinance } from "@/components/finance-provider";
@@ -8,7 +9,7 @@ import { useFinanceSummary } from "@/components/use-finance-summary";
 import { MoneyKeypad } from "@/components/ui/money-keypad";
 import { Card, focusRing } from "@/components/ui/primitives";
 import { formatCurrency } from "@/lib/formatting";
-import { signOutAction } from "../actions";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const rowClass = `flex min-h-14 w-full items-center gap-4 rounded-2xl px-2 text-left text-base transition-colors hover:bg-[var(--color-soft)] ${focusRing}`;
 
@@ -17,7 +18,17 @@ export default function SettingsPage() {
   const { today, currency, balanceCents } = useFinanceSummary();
   const [editingBalance, setEditingBalance] = useState(false);
   const [message, setMessage] = useState<{ text: string; failed: boolean } | null>(null);
+  const router = useRouter();
   const name = preferences?.displayName?.trim();
+
+  async function signOut() {
+    try {
+      await createSupabaseBrowserClient().auth.signOut();
+      router.replace("/login");
+    } catch {
+      setMessage({ text: "Não foi possível encerrar a sessão. Tente novamente.", failed: true });
+    }
+  }
 
   async function saveBalance(cents: number) {
     if (!preferences) return;
@@ -65,12 +76,10 @@ export default function SettingsPage() {
               <span className="flex-1 font-medium">Alterar senha</span>
               <ChevronRight size={18} className="text-[var(--color-muted)]" aria-hidden="true" />
             </Link>
-            <form action={signOutAction}>
-              <button className={rowClass}>
-                <LogOut size={20} className="text-[var(--color-error)]" aria-hidden="true" />
-                <span className="flex-1 font-medium text-[var(--color-error)]">Encerrar sessão</span>
-              </button>
-            </form>
+            <button type="button" onClick={() => void signOut()} className={rowClass}>
+              <LogOut size={20} className="text-[var(--color-error)]" aria-hidden="true" />
+              <span className="flex-1 font-medium text-[var(--color-error)]">Encerrar sessão</span>
+            </button>
           </>
         ) : null}
       </Card>

@@ -2,6 +2,8 @@
 
 **Finanças pessoais para entender, planejar e melhorar a relação com o dinheiro.**
 
+**Acesse:** https://bragahauser-byte.github.io/prumo/
+
 O Prumo não movimenta dinheiro. Ele organiza o que você registra para responder, de forma clara, três perguntas: *como está minha vida financeira agora?*, *quanto ainda posso gastar?* e *o que vem pela frente?* — e assim antecipar problemas antes que aconteçam.
 
 ## O que o app faz
@@ -50,6 +52,10 @@ supabase start
 supabase db reset
 supabase test db
 ```
+
+## Publicação no GitHub Pages
+
+Cada push na `main` roda o workflow `.github/workflows/pages.yml`: testes, build estático (`DEPLOY_TARGET=pages`, servido em `/prumo`) e publicação. A versão publicada usa o modo local — os dados ficam no navegador de quem usa; login e sincronização com Supabase exigem um servidor Next (ex.: Vercel).
 
 ## Scripts
 

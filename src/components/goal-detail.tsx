@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { CalendarClock, Check, ChevronLeft, Trash2 } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
@@ -16,7 +16,7 @@ import type { FinanceGoalContribution } from "@/lib/finance/repository";
 import { formatCalendarDate, formatCurrency, formatShortDate } from "@/lib/formatting";
 
 export function GoalDetail() {
-  const { id } = useParams<{ id: string }>();
+  const id = useSearchParams().get("id");
   const router = useRouter();
   const { savingsGoals, saveSavingsGoal, deleteSavingsGoal, isSaving } = useFinance();
   const { today, currency } = useFinanceSummary();

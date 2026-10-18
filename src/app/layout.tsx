@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { asset } from "@/lib/base-path";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: { default: "Prumo — finanças pessoais", template: "%s · Prumo" },
   description: "Entenda sua situação financeira, planeje o mês e antecipe problemas antes que aconteçam.",
-  icons: { icon: "/app-icon.png", apple: "/app-icon.png" },
+  icons: { icon: asset("/app-icon.png"), apple: asset("/app-icon.png") },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
