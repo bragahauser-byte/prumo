@@ -45,7 +45,7 @@ export function accountBalance(account: AccountLike, movements: AccountMovement[
  * Saldos por conta e total na moeda-base. Contas em outra moeda são convertidas pela cotação
  * disponível; sem cotação, ficam fora do total e `missingRates` lista as moedas.
  */
-export function accountBalances(accounts: AccountLike[], movements: AccountMovement[], base: string, table: RatesTable | null, manual: ManualRates = {}) {
+export function accountBalances<A extends AccountLike>(accounts: A[], movements: AccountMovement[], base: string, table: RatesTable | null, manual: ManualRates = {}) {
   const missing = new Set<string>();
   const items = accounts.map((account) => {
     const balanceCents = accountBalance(account, movements, base);

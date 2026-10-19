@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Camera, ChevronRight, KeyRound, LogOut, ShieldCheck, SlidersHorizontal, Wallet } from "lucide-react";
+import { Bell, BellRing, Camera, ChevronRight, KeyRound, Landmark, LogOut, ShieldCheck, SlidersHorizontal, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
+import { QuickBalanceUpdate } from "@/components/accounts/quick-balance";
 import { useFinance } from "@/components/finance-provider";
+import { NotificationCenter, useNotifications } from "@/components/notifications";
+import { usePrivacy } from "@/components/privacy";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useToast } from "@/components/ui/toast";
 import { photoToAvatarDataUrl } from "@/lib/image";
 import { useFinanceSummary } from "@/components/use-finance-summary";
-import { MoneyKeypad } from "@/components/ui/money-keypad";
 import { Card, focusRing } from "@/components/ui/primitives";
 import { formatCurrency } from "@/lib/formatting";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -17,9 +19,12 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 const rowClass = `flex min-h-14 w-full items-center gap-4 rounded-2xl px-2 py-2 text-left text-base transition-colors hover:bg-[var(--color-soft)] ${focusRing}`;
 
 export default function SettingsPage() {
-  const { mode, preferences, expenses, savingsGoals, recurringRules, savePreferences } = useFinance();
-  const { today, currency, balanceCents } = useFinanceSummary();
+  const { mode, preferences, expenses, savingsGoals, recurringRules, accounts, savePreferences } = useFinance();
+  const { currency, balanceCents } = useFinanceSummary();
+  const { unseenCount } = useNotifications();
+  const { mask } = usePrivacy();
   const [editingBalance, setEditingBalance] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [message, setMessage] = useState<{ text: string; failed: boolean } | null>(null);
   const router = useRouter();
   const toast = useToast();
@@ -60,17 +65,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function saveBalance(cents: number) {
-    if (!preferences) return;
-    try {
-      await savePreferences({ ...preferences, reportedBalanceCents: cents, balanceReportedOn: today });
-      setEditingBalance(false);
-      toast("Saldo atualizado");
-    } catch {
-      setMessage({ text: "Não foi possível salvar o saldo.", failed: true });
-    }
-  }
-
   return (
     <div className="mx-auto max-w-[720px] space-y-4">
       <Card className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
@@ -96,25 +90,36 @@ export default function SettingsPage() {
       {message ? <p className={`text-sm ${message.failed ? "text-[var(--color-error)]" : "text-[var(--color-success)]"}`} role={message.failed ? "alert" : "status"}>{message.text}</p> : null}
 
       <Card className="p-3 sm:p-3">
-        <Link href="/onboarding/edit" className={rowClass}>
-          <SlidersHorizontal size={20} className="text-[var(--color-action)]" aria-hidden="true" />
-          <span className="flex-1"><span className="block font-medium">Perfil e preferências</span><span className="block text-sm text-[var(--color-muted)]">Nome, moeda, renda e dia de recebimento</span></span>
-          <ChevronRight size={18} className="text-[var(--color-muted)]" aria-hidden="true" />
+        <Link href="/settings/profile" className={rowClass}>
+          <SlidersHorizontal size={20} className="text-[var(--color-muted)]" aria-hidden="true" />
+          <span className="flex-1"><span className="block font-medium">Perfil e preferências</span><span className="block text-sm text-[var(--color-tertiary)]">Nome, moeda, renda, recebimento, saldo e objetivos</span></span>
+          <ChevronRight size={18} className="text-[var(--color-quaternary)]" aria-hidden="true" />
         </Link>
+        <Link href="/settings/accounts" className={rowClass}>
+          <Landmark size={20} className="text-[var(--color-muted)]" aria-hidden="true" />
+          <span className="flex-1"><span className="block font-medium">Bancos e contas</span><span className="block text-sm text-[var(--color-tertiary)]">{accounts.length ? `${accounts.length} ${accounts.length === 1 ? "conta" : "contas"} · saldos e cotações` : "Saldos por banco e em outras moedas"}</span></span>
+          <ChevronRight size={18} className="text-[var(--color-quaternary)]" aria-hidden="true" />
+        </Link>
+        <button type="button" onClick={() => setShowNotifications(true)} className={rowClass}>
+          <BellRing size={20} className="text-[var(--color-muted)]" aria-hidden="true" />
+          <span className="flex-1"><span className="block font-medium">Central de notificações</span><span className="block text-sm text-[var(--color-tertiary)]">{unseenCount ? `${unseenCount} ${unseenCount === 1 ? "aviso novo" : "avisos novos"}` : "Avisos, lembretes e insights"}</span></span>
+          {unseenCount ? <span className="tabular flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--color-highlight)] px-1.5 text-xs font-semibold text-white">{unseenCount > 9 ? "9+" : unseenCount}</span> : null}
+          <ChevronRight size={18} className="text-[var(--color-quaternary)]" aria-hidden="true" />
+        </button>
         <Link href="/settings/notifications" className={rowClass}>
-          <Bell size={20} className="text-[var(--color-action)]" aria-hidden="true" />
+          <Bell size={20} className="text-[var(--color-muted)]" aria-hidden="true" />
           <span className="flex-1"><span className="block font-medium">Notificações e lembretes</span><span className="block text-sm text-[var(--color-muted)]">Alertas importantes, lembretes no seu horário e insights</span></span>
           <ChevronRight size={18} className="text-[var(--color-muted)]" aria-hidden="true" />
         </Link>
         <button type="button" onClick={() => setEditingBalance(true)} className={rowClass}>
-          <Wallet size={20} className="text-[var(--color-action)]" aria-hidden="true" />
-          <span className="flex-1"><span className="block font-medium">Saldo disponível</span><span className="tabular block text-sm text-[var(--color-muted)]">{balanceCents === null ? "Não informado" : formatCurrency(balanceCents, currency)}</span></span>
+          <Wallet size={20} className="text-[var(--color-muted)]" aria-hidden="true" />
+          <span className="flex-1"><span className="block font-medium">Saldo disponível</span><span className="tabular block text-sm text-[var(--color-tertiary)]">{balanceCents === null ? "Não informado" : mask(formatCurrency(balanceCents, currency))}</span></span>
           <ChevronRight size={18} className="text-[var(--color-muted)]" aria-hidden="true" />
         </button>
         {mode === "supabase" ? (
           <>
             <Link href="/settings/password" className={rowClass}>
-              <KeyRound size={20} className="text-[var(--color-action)]" aria-hidden="true" />
+              <KeyRound size={20} className="text-[var(--color-muted)]" aria-hidden="true" />
               <span className="flex-1 font-medium">Alterar senha</span>
               <ChevronRight size={18} className="text-[var(--color-muted)]" aria-hidden="true" />
             </Link>
@@ -140,18 +145,8 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {editingBalance ? (
-        <MoneyKeypad
-          title="Atualizar saldo"
-          currency={currency}
-          allowZero
-          initialCents={balanceCents !== null && balanceCents > 0 ? balanceCents : null}
-          submitLabel="Salvar saldo"
-          helper="Quanto há na sua conta agora? O que você pagar ou receber a partir de hoje ajusta este valor."
-          onSubmit={(cents) => void saveBalance(cents)}
-          onClose={() => setEditingBalance(false)}
-        />
-      ) : null}
+      {editingBalance ? <QuickBalanceUpdate onClose={() => setEditingBalance(false)} /> : null}
+      {showNotifications ? <NotificationCenter onClose={() => setShowNotifications(false)} /> : null}
     </div>
   );
 }

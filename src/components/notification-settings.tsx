@@ -103,9 +103,9 @@ export function NotificationSettingsScreen() {
 
       <Section icon={BellRing} tone="bg-[var(--color-action-soft)] text-[var(--color-action)]" title="Notificações no aparelho" description="O Prumo calcula os avisos no seu aparelho: eles chegam quando o app está aberto em alguma aba ou janela. Nada é enviado a servidores.">
         {currentPermission === "unsupported" ? (
-          <p className="py-3 text-sm text-[var(--color-muted)]">Este navegador não mostra notificações. Os avisos continuam no sino, no topo da tela.</p>
+          <p className="py-3 text-sm text-[var(--color-muted)]">Este navegador não mostra notificações. Os avisos continuam na central de notificações, em Ajustes.</p>
         ) : currentPermission === "granted" ? (
-          <Row title="Receber notificações" description={pushOn ? "Ligado neste aparelho." : "Desligado. Os avisos ficam só no sino."} control={<Switch checked={pushOn} disabled={isSaving} label="Receber notificações" onChange={(value) => void save({ notificationsEnabled: value }, value ? "Notificações ativadas" : "Notificações desligadas")} />} />
+          <Row title="Receber notificações" description={pushOn ? "Ligado neste aparelho." : "Desligado. Os avisos ficam só na central de notificações, em Ajustes."} control={<Switch checked={pushOn} disabled={isSaving} label="Receber notificações" onChange={(value) => void save({ notificationsEnabled: value }, value ? "Notificações ativadas" : "Notificações desligadas")} />} />
         ) : (
           <div className="py-3">
             <button type="button" onClick={() => void enablePush()} className={`${inkButton} w-full sm:w-auto`}>Permitir notificações</button>
@@ -115,7 +115,7 @@ export function NotificationSettingsScreen() {
       </Section>
 
       <Section icon={TriangleAlert} tone="bg-[var(--color-warning-soft)] text-[var(--color-warning)]" title="Alertas importantes" description="Só quando existe uma ação útil: conta que vence amanhã, orçamento perto do limite, meta com prazo próximo e ritmo abaixo do planejado.">
-        <Row title="Também como notificação" description="Sempre aparecem no sino; aqui você escolhe se avisam fora do app." control={<Switch checked={settings.alertsPush} disabled={isSaving} label="Alertas importantes como notificação" onChange={(value) => void save({ settings: { ...settings, alertsPush: value } }, value ? "Alertas ligados" : "Alertas só no app")} />} />
+        <Row title="Também como notificação" description="Sempre aparecem na central de notificações; aqui você escolhe se avisam fora do app." control={<Switch checked={settings.alertsPush} disabled={isSaving} label="Alertas importantes como notificação" onChange={(value) => void save({ settings: { ...settings, alertsPush: value } }, value ? "Alertas ligados" : "Alertas só no app")} />} />
       </Section>
 
       <Section icon={CalendarClock} tone="bg-[var(--color-soft)] text-[var(--color-text)]" title="Lembretes programados" description="Você escolhe a frequência e o horário. Todos começam desligados.">
@@ -154,7 +154,7 @@ export function NotificationSettingsScreen() {
       </Section>
 
       <Section icon={Lightbulb} tone="bg-[var(--color-action-soft)] text-[var(--color-action)]" title="Insights financeiros" description="O que talvez você não tenha notado: gastou menos numa categoria, como deve fechar o mês, uma meta quase completa. No máximo três por vez, sempre com contexto.">
-        <Row title="O principal insight da semana como notificação" description="No máximo um por semana. Os demais ficam no sino." control={<Switch checked={settings.insightsPush} disabled={isSaving} label="Insight da semana como notificação" onChange={(value) => void save({ settings: { ...settings, insightsPush: value } }, value ? "Insight semanal ligado" : "Insights só no app")} />} />
+        <Row title="O principal insight da semana como notificação" description="No máximo um por semana. Os demais ficam na central de notificações." control={<Switch checked={settings.insightsPush} disabled={isSaving} label="Insight da semana como notificação" onChange={(value) => void save({ settings: { ...settings, insightsPush: value } }, value ? "Insight semanal ligado" : "Insights só no app")} />} />
       </Section>
 
       <Section icon={CircleCheck} tone="bg-[var(--color-success-soft)] text-[var(--color-success)]" title="Confirmações" description="Despesa registrada, meta criada, orçamento atualizado: aparecem como um aviso discreto na tela e nunca viram notificação." />
