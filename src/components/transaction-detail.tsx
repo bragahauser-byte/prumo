@@ -19,8 +19,9 @@ import { formatCalendarDate, formatCurrency } from "@/lib/formatting";
 export function TransactionDetail() {
   const id = useSearchParams().get("id");
   const router = useRouter();
-  const { expenses, recurringRules, preferences, setExpenseStatus, deleteExpense, isSaving } = useFinance();
+  const { expenses, recurringRules, preferences, accounts, setExpenseStatus, deleteExpense, isSaving } = useFinance();
   const transaction = expenses.find((item) => item.id === id);
+  const accountName = transaction?.accountId ? accounts.find((item) => item.id === transaction.accountId)?.name ?? null : null;
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [message, setMessage] = useState<{ text: string; failed: boolean } | null>(null);
@@ -80,6 +81,7 @@ export function TransactionDetail() {
             <CategoryIcon category={transaction.category} kind={transaction.kind} size={64} />
             <h2 className="mt-4 text-xl font-semibold">{transaction.description}</h2>
             <p className={`tabular mt-2 text-4xl font-semibold ${isIncome ? "text-[var(--color-income)]" : isTransfer ? "" : "text-[var(--color-expense)]"}`}>{isIncome ? "+" : isTransfer ? "" : "−"}{formatCurrency(transaction.amountCents, currency)}</p>
+            {transaction.original && transaction.original.currency !== currency ? <p className="tabular mt-1 text-sm text-[var(--color-tertiary)]">Original {formatCurrency(transaction.original.amountCents, transaction.original.currency)} · 1 {transaction.original.currency} = {formatCurrency(Math.round(transaction.original.rate * 100), currency)}{transaction.original.rateDate ? ` (${formatCalendarDate(transaction.original.rateDate)}${transaction.original.manual ? ", taxa informada" : ""})` : ""}</p> : null}
             <div className="mt-3"><StatusChip status={status} /></div>
           </Card>
 
@@ -87,6 +89,7 @@ export function TransactionDetail() {
             <dl className="divide-y divide-[var(--color-border)] text-base">
               <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">Tipo</dt><dd className="font-medium">{isIncome ? "Receita" : isTransfer ? "Movimentação interna" : "Despesa"} · {isTransfer ? "não conta como gasto" : rule ? "fixa" : "variável"}</dd></div>
               <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">Categoria</dt><dd className="font-medium">{transaction.category}</dd></div>
+              {accountName ? <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">Conta</dt><dd className="font-medium">{accountName}</dd></div> : null}
               <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">{isIncome ? "Previsão" : "Vencimento"}</dt><dd className="font-medium">{formatCalendarDate(transaction.date)}</dd></div>
               {transaction.paidOn ? <div className="flex justify-between gap-4 py-3"><dt className="text-[var(--color-muted)]">{isIncome ? "Recebido em" : "Pago em"}</dt><dd className="font-medium">{formatCalendarDate(transaction.paidOn)}</dd></div> : null}
               {transaction.notes ? <div className="py-3"><dt className="text-[var(--color-muted)]">Observação</dt><dd className="mt-1">{transaction.notes}</dd></div> : null}
@@ -145,7 +148,7 @@ function TransactionEditForm({ transaction, currency, onDone }: { transaction: F
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setError("Confira a data.");
     const status = transaction.status === "paid" ? "paid" : date > today ? "scheduled" : "pending";
     try {
-      await saveExpense({ ...transaction, kind, description: description.trim(), amountCents, category, date, status, notes: notes.trim() || null });
+      await saveExpense({ ...transaction, kind, description: description.trim(), amountCents, category, date, status, notes: notes.trim() || null, original: amountCents === transaction.amountCents ? transaction.original : null });
       onDone();
     } catch {
       setError("Não foi possível salvar. Tente novamente.");

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, Clock3, History, Repeat, Search, Tag, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowLeftRight, CalendarDays, Check, Clock3, History, Landmark, Repeat, Search, Tag, X } from "lucide-react";
+import { useExchangeRates } from "@/components/exchange-rates";
 import { useFinance } from "@/components/finance-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useFinanceSummary } from "@/components/use-finance-summary";
@@ -13,6 +14,8 @@ import { AmountDisplay, KeypadGrid, useKeypadInput } from "@/components/ui/money
 import { focusRing, inkButton } from "@/components/ui/primitives";
 import { categoriesFor, isTransferCategory, suggestCategory, suggestTransfer, transferCategories, type TransactionKind } from "@/domain/categories";
 import { budgetAfterExpense } from "@/domain/category-analysis";
+import { currencies, type CurrencyCode } from "@/domain/currencies";
+import { quote } from "@/domain/exchange";
 import { goalProgress } from "@/domain/planning";
 import { addDays, todayISO } from "@/lib/dates";
 import { createFinanceId, type FinanceRecurringRule } from "@/lib/finance/repository";
@@ -38,8 +41,9 @@ export function AddFlow() {
   const searchParams = useSearchParams();
   const close = useClose();
   const finance = useFinance();
-  const { expenses, savingsGoals, budgets, preferences, isSaving, saveExpense, saveRecurringRule, generateOccurrences, saveSavingsGoal } = finance;
+  const { expenses, savingsGoals, budgets, preferences, accounts, isSaving, saveExpense, saveRecurringRule, generateOccurrences, saveSavingsGoal } = finance;
   const { currency, spendable, balanceCents } = useFinanceSummary();
+  const { table, manualRates, refresh: refreshRates } = useExchangeRates();
   const today = todayISO();
   const fixedGoal = savingsGoals.find((goal) => goal.id === searchParams.get("goal")) ?? null;
 
@@ -56,12 +60,23 @@ export function AddFlow() {
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [entryCurrency, setEntryCurrency] = useState<CurrencyCode>(currency);
+  const [rateText, setRateText] = useState("");
 
   const keypad = useKeypadInput({ currency, enabled: stage === "amount", onEscape: close });
   const goal = savingsGoals.find((item) => item.id === goalId) ?? null;
   const kind: TransactionKind = action === "income" ? "income" : category && isTransferCategory(category) ? "transfer" : "expense";
   const isPaid = settled && date <= today;
-  const amountLabel = formatCurrencyCompact(amountCents, currency);
+  // Valor digitado na moeda escolhida; o registro guarda o convertido para a moeda-base e o original.
+  const foreign = action !== "goal" && entryCurrency !== currency;
+  const typedRate = rateText ? Number(rateText.includes(",") ? rateText.replace(/\./g, "").replace(",", ".") : rateText) : null;
+  const autoQuote = foreign ? quote(entryCurrency, currency, currency, table, manualRates) : null;
+  const rate = !foreign ? 1 : typedRate && typedRate > 0 ? typedRate : autoQuote?.rate ?? null;
+  const baseCents = rate === null ? null : foreign ? Math.round(amountCents * rate) : amountCents;
+  const effectiveCents = baseCents ?? amountCents;
+  const account = accounts.find((item) => item.id === accountId) ?? null;
+  const amountLabel = formatCurrencyCompact(amountCents, foreign ? entryCurrency : currency);
 
   const recentCategories = useMemo(() => {
     const seen: string[] = [];
@@ -79,7 +94,7 @@ export function AddFlow() {
 
   // O orçamento nunca impede o registro: o gasto é salvo e o excedente é informado.
   const budget = kind === "expense" && category ? budgets.find((item) => item.category === category) : undefined;
-  const budgetAfter = budget ? { ...budgetAfterExpense(expenses, budget, date.slice(0, 7), amountCents), category: budget.category, limitCents: budget.limitCents, alertAt: budget.alertAt } : null;
+  const budgetAfter = budget ? { ...budgetAfterExpense(expenses, budget, date.slice(0, 7), effectiveCents), category: budget.category, limitCents: budget.limitCents, alertAt: budget.alertAt } : null;
   const budgetNotice = !budgetAfter ? null
     : budgetAfter.level === "over" ? { tone: "over" as const, text: `${budgetAfter.category} passa ${formatCurrency(budgetAfter.excessCents, currency)} do limite de ${formatCurrency(budgetAfter.limitCents, currency)} do mês.` }
       : budgetAfter.level === "reached" ? { tone: "warning" as const, text: `${budgetAfter.category} atinge o limite de ${formatCurrency(budgetAfter.limitCents, currency)} do mês.` }
@@ -112,7 +127,18 @@ export function AddFlow() {
     setSettled(true);
     setRepeat("none");
     setError(null);
+    setAccountId(null);
+    setEntryCurrency(currency);
+    setRateText("");
     keypad.clear();
+  }
+
+  function chooseAccount(id: string) {
+    const next = accounts.find((item) => item.id === id) ?? null;
+    setAccountId(next?.id ?? null);
+    if (next) setEntryCurrency(next.currency);
+    if (next && next.currency !== currency) refreshRates();
+    setRateText("");
   }
 
   async function save() {
@@ -125,18 +151,20 @@ export function AddFlow() {
       } else {
         const name = description.trim();
         if (!name) { setStage("note"); return setError("Escreva uma descrição."); }
+        if (baseCents === null || baseCents <= 0) return setError(`Sem cotação para ${entryCurrency}. Informe quanto vale 1 ${entryCurrency} em ${currency}.`);
+        const original = foreign && rate !== null ? { currency: entryCurrency, amountCents, rate, rateDate: typedRate ? today : autoQuote?.date ?? null, manual: Boolean(typedRate) || autoQuote?.source === "manual" } : null;
         const status = isPaid ? "paid" as const : date > today ? "scheduled" as const : "pending" as const;
         const ruleId = repeat === "none" ? null : createFinanceId();
         if (ruleId && repeat !== "none") {
           await saveRecurringRule({
-            id: ruleId, kind, name, amountCents, category, frequency: repeat, interval: 1, startsOn: date,
+            id: ruleId, kind, name, amountCents: baseCents, category, frequency: repeat, interval: 1, startsOn: date,
             dueDay: repeat === "weekly" ? null : Number(date.slice(8, 10)), endsOn: null, isActive: true, isVariable: false, notes: null,
           });
         }
         await saveExpense({
-          id: createFinanceId(), kind, description: name, amountCents, category, date, status,
+          id: createFinanceId(), kind, description: name, amountCents: baseCents, category, date, status,
           paidOn: isPaid ? date : null, notes: null, recurringRuleId: ruleId, occurrenceDate: ruleId ? date : null,
-          accountId: null, original: null,
+          accountId, original,
         });
         if (ruleId) await generateOccurrences(ruleId, addDays(today, 90));
       }
@@ -152,7 +180,7 @@ export function AddFlow() {
       <Receipt
         action={action}
         kind={kind}
-        amount={formatCurrencyCompact(amountCents, currency)}
+        amount={amountLabel}
         title={action === "goal" ? goal?.name ?? "Meta" : description.trim()}
         icon={action === "goal" ? <GoalIcon icon={goal?.icon ?? "other"} size={64} /> : <CategoryIcon category={category} kind={kind} size={64} />}
         when={`${date === today ? "Hoje" : formatShortDate(date)}${savedAt ? ` · ${savedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : ""}`}
@@ -163,6 +191,8 @@ export function AddFlow() {
             ? { icon: <Tag size={20} aria-hidden="true" />, title: "Progresso", text: `${Math.round(goalProgress(goal, today).ratio * 100)}% · ${formatCurrency(goalProgress(goal, today).savedCents, currency)} de ${formatCurrency(goal.targetCents, currency)}` }
             : { icon: <Tag size={20} aria-hidden="true" />, title: "Categoria", text: `${category}${repeat !== "none" ? " · fixo" : " · variável"}` },
           { icon: <CalendarDays size={20} aria-hidden="true" />, title: "Data", text: `${formatCalendarDate(date)}${action === "goal" ? "" : ` · ${isPaid ? (kind === "income" ? "Recebido" : "Pago") : "Previsto"}`}` },
+          foreign && baseCents !== null ? { icon: <ArrowLeftRight size={20} aria-hidden="true" />, title: "Conversão", text: `${formatCurrency(amountCents, entryCurrency)} ≈ ${formatCurrency(baseCents, currency)} (1 ${entryCurrency} = ${formatCurrency(Math.round((rate ?? 0) * 100), currency)})` } : null,
+          account && action !== "goal" ? { icon: <Landmark size={20} aria-hidden="true" />, title: "Conta", text: account.name } : null,
           repeat !== "none" && action !== "goal" ? { icon: <Repeat size={20} aria-hidden="true" />, title: "Repetição", text: `${repeatLabels[repeat]} · próximas ocorrências na Agenda` } : null,
           budgetNotice ? { icon: <AlertTriangle size={20} aria-hidden="true" />, title: budgetAfter?.level === "over" ? "Orçamento ultrapassado" : "Orçamento", text: budgetNotice.text, tone: budgetNotice.tone } : null,
         ]}
@@ -196,7 +226,7 @@ export function AddFlow() {
         </div>
 
         <div className={`flex flex-col items-center justify-center px-6 text-center ${sheetOpen ? "pt-6" : "pb-8 pt-12"}`}>
-          <AmountDisplay value={sheetOpen ? String(amountCents / 100).replace(".", ",") : keypad.value} currency={currency} feedback={sheetOpen ? null : keypad.feedback} bumpKey={sheetOpen ? 0 : keypad.bumpKey} className={!sheetOpen && !keypad.value ? "opacity-60" : ""} />
+          <AmountDisplay value={sheetOpen ? String(amountCents / 100).replace(".", ",") : keypad.value} currency={sheetOpen && foreign ? entryCurrency : currency} feedback={sheetOpen ? null : keypad.feedback} bumpKey={sheetOpen ? 0 : keypad.bumpKey} className={!sheetOpen && !keypad.value ? "opacity-60" : ""} />
           {!sheetOpen && fixedGoal ? <p className="mt-4 text-sm text-[#163300]/80">Guardar em {fixedGoal.name}</p> : null}
         </div>
 
@@ -344,9 +374,36 @@ export function AddFlow() {
                       <button type="button" onClick={() => setRepeat(repeatCycle[(repeatCycle.indexOf(repeat) + 1) % repeatCycle.length])} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-3 text-sm font-medium ${focusRing}`}>
                         <Repeat size={16} aria-hidden="true" /> {repeatLabels[repeat]}
                       </button>
+                      {accounts.length ? (
+                        <label className={`relative inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-3 text-sm font-medium focus-within:outline-2 focus-within:outline-[var(--color-action)]`}>
+                          <Landmark size={16} aria-hidden="true" /> {account ? account.name : "Conta"}
+                          <select aria-label="Conta" value={accountId ?? ""} onChange={(event) => chooseAccount(event.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
+                            <option value="">Sem conta</option>
+                            {accounts.map((item) => <option key={item.id} value={item.id}>{item.name} ({item.currency})</option>)}
+                          </select>
+                        </label>
+                      ) : null}
+                      <label className={`relative inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[var(--color-soft)] px-3 text-sm font-medium focus-within:outline-2 focus-within:outline-[var(--color-action)]`}>
+                        <ArrowLeftRight size={16} aria-hidden="true" /> {entryCurrency}
+                        <select aria-label="Moeda do valor" value={entryCurrency} onChange={(event) => { setEntryCurrency(event.target.value as CurrencyCode); setRateText(""); if (event.target.value !== currency) refreshRates(); }} className="absolute inset-0 cursor-pointer opacity-0">
+                          {currencies.map((item) => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}
+                        </select>
+                      </label>
                     </>
                   ) : null}
                 </div>
+
+                {foreign ? (
+                  <div className="mt-4 rounded-2xl bg-[var(--color-soft)] px-4 py-3 text-sm">
+                    <p className="tabular font-medium">{formatCurrency(amountCents, entryCurrency)} {baseCents !== null ? <>≈ <span className="font-semibold">{formatCurrency(baseCents, currency)}</span></> : "— sem cotação"}</p>
+                    <label className="mt-2 flex items-center gap-2 text-[var(--color-muted)]">
+                      <span className="shrink-0">1 {entryCurrency} =</span>
+                      <input value={rateText} onChange={(event) => setRateText(event.target.value.replace(/[^\d,.]/g, "").slice(0, 12))} inputMode="decimal" placeholder={autoQuote ? autoQuote.rate.toLocaleString("pt-BR", { maximumFractionDigits: 4 }) : "cotação"} aria-label={`Cotação: quanto vale 1 ${entryCurrency} em ${currency}`} className="tabular min-h-9 w-24 rounded-lg bg-white px-2 text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-action-soft)]" />
+                      <span className="shrink-0">{currency}</span>
+                    </label>
+                    <p className="mt-1 text-xs text-[var(--color-tertiary)]">{typedRate ? "Taxa informada por você." : autoQuote?.source === "manual" ? "Taxa manual salva em Bancos e contas." : autoQuote?.date ? `Cotação de referência de ${formatShortDate(autoQuote.date)}. Edite se a sua foi outra.` : "Sem cotação automática agora: informe a taxa."}</p>
+                  </div>
+                ) : null}
 
                 <div className="min-h-6 flex-1" />
 
@@ -363,9 +420,9 @@ export function AddFlow() {
                   ) : kind === "transfer" ? (
                     <><span className="font-semibold">Movimentação interna</span><span className="text-[var(--color-muted)]">não altera saldo nem orçamento</span></>
                   ) : action === "expense" ? (
-                    <><span className="font-semibold">Ainda pode gastar</span><span className="tabular text-[var(--color-muted)]">{spendable ? `${formatCurrency(spendable.amountCents - amountCents, currency)} depois` : "—"}</span></>
+                    <><span className="font-semibold">Ainda pode gastar</span><span className="tabular text-[var(--color-muted)]">{spendable ? `${formatCurrency(spendable.amountCents - effectiveCents, currency)} depois` : "—"}</span></>
                   ) : (
-                    <><span className="font-semibold">Saldo disponível</span><span className="tabular text-[var(--color-muted)]">{balanceCents !== null ? `${formatCurrency(balanceCents + (isPaid ? amountCents : 0), currency)} depois` : "não informado"}</span></>
+                    <><span className="font-semibold">Saldo disponível</span><span className="tabular text-[var(--color-muted)]">{balanceCents !== null ? `${formatCurrency(balanceCents + (isPaid ? effectiveCents : 0), currency)} depois` : "não informado"}</span></>
                   )}
                 </p>
                 {error ? <p className="mt-3 text-sm text-[var(--color-error)]" role="alert">{error}</p> : null}
