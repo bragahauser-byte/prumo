@@ -20,10 +20,19 @@
   --color-dark-charcoal: #21231d;
   --color-dark-maroon: #320707;
 
-  /* Conteúdo */
+  /*
+   * Destaque da marca (laranja): navegação ativa e assistente. Nunca sinaliza gasto.
+   */
+  --color-highlight: #f26b1d;
+  --color-highlight-pressed: #d95a10;
+  --color-highlight-soft: #fdeadb;
+  --color-on-highlight: #ffffff;
+
+  /* Conteúdo: hierarquia em tons de cinza */
   --color-text: #0e0f0c;           /* content primary */
   --color-muted: #454745;          /* content secondary */
   --color-tertiary: #6a6c6a;       /* content tertiary */
+  --color-quaternary: #8a8c89;     /* ícones inativos, metadados discretos */
   --color-link: #163300;           /* content link */
   --color-placeholder: #868685;
 
@@ -50,8 +59,9 @@
   --shadow-card: 0 1px 2px rgba(14, 15, 12, 0.04), 0 6px 24px rgba(14, 15, 12, 0.05);
 
   /* Navegação */
-  --color-nav-glass: rgba(255, 255, 255, 0.86);
-  --color-nav-selection: #e2f6d5;
+  --color-nav-glass: rgba(250, 250, 248, 0.92);
+  --color-nav-selection: var(--color-highlight-soft);
+  --color-nav-icon: var(--color-quaternary);
 
   /* Sentimento */
   --color-success: #2f5711;
@@ -62,14 +72,26 @@
   --color-error: #a8200d;
   --color-error-soft: #fbe6e2;
 
-  /* Entradas e saídas: verde para o que entra, vermelho para o que sai */
+  /*
+   * Entradas e saídas: verde discreto para o que entra; o que sai usa a cor do texto,
+   * sem vermelho (gera ansiedade) e sem a cor de destaque da marca.
+   * Atraso e limite ultrapassado usam âmbar (--color-over), reservado o vermelho a erros do sistema.
+   */
   --color-income: #2f5711;
   --color-income-soft: #e2f6d5;
-  --color-expense: #c7271a;
-  --color-expense-soft: #fde7e4;
+  --color-expense: var(--color-text);
+  --color-expense-soft: var(--color-soft);
+  --color-over: #8a6100;
+  --color-over-soft: #fff6d1;
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Tipografia: pesos e tamanhos mínimos centralizados */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-size-min: 0.75rem; /* 12 px: nenhum texto abaixo disso */
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 /*
@@ -82,8 +104,14 @@
 @theme inline {
   --color-background: var(--color-bg);
   --color-foreground: var(--color-text);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-highlight: var(--color-highlight);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
   --text-lg: 1.25rem;
   --text-lg--line-height: 1.75rem;
   --text-3xl: 1.75rem;
@@ -110,7 +138,10 @@
     min-height: 100vh;
     background: var(--color-bg);
     color: var(--color-text);
-    font-family: var(--font-sans), Arial, sans-serif;
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-regular);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
   }
 
   button,
@@ -130,6 +161,19 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+}
+
+/*
+ * Estilos de texto do produto (tokens). Hierarquia por peso e tom de cinza, nunca abaixo de 12 px.
+ * type-title: títulos de tela · type-heading: títulos de seção · type-body: texto corrido
+ * type-label: rótulos e itens de lista · type-caption: metadados e notas (12 px, cinza terciário).
+ */
+@layer components {
+  .type-title { font-size: 1.5rem; line-height: 1.875rem; font-weight: var(--font-weight-semibold); letter-spacing: -0.01em; color: var(--color-text); }
+  .type-heading { font-size: 1.25rem; line-height: 1.75rem; font-weight: var(--font-weight-semibold); color: var(--color-text); }
+  .type-body { font-size: 1rem; line-height: 1.5rem; font-weight: var(--font-weight-regular); color: var(--color-text); }
+  .type-label { font-size: 0.875rem; line-height: 1.25rem; font-weight: var(--font-weight-medium); color: var(--color-muted); }
+  .type-caption { font-size: var(--font-size-min); line-height: 1rem; font-weight: var(--font-weight-regular); color: var(--color-tertiary); }
 }
 
 @keyframes sheet-in {
