@@ -43,7 +43,7 @@ function Change({ value, label }: { value: number | null; label: string }) {
   const up = value > 0;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${up ? "text-[var(--color-expense)]" : "text-[var(--color-income)]"}`}>
+    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${up ? "text-[var(--color-muted)]" : "text-[var(--color-income)]"}`}>
       <Icon size={14} aria-hidden="true" />
       {up ? "+" : "−"}{Math.abs(Math.round(value * 100))}% <span className="font-normal text-[var(--color-muted)]">{label}</span>
     </span>
@@ -164,7 +164,7 @@ function BudgetLine({ item, currency }: { item: CategoryTotal; currency: string 
       <span className={`rounded-full px-2 py-0.5 font-semibold ${state.className}`}>{state.label}</span>
       <span className="tabular text-[var(--color-muted)]">
         {Math.floor(item.budget.ratio * 100)}% de {formatCurrency(item.budget.limitCents, currency)} ·{" "}
-        {item.budget.remainingCents >= 0 ? `restam ${formatCurrency(item.budget.remainingCents, currency)}` : <span className="font-semibold text-[var(--color-error)]">excedente de {formatCurrency(-item.budget.remainingCents, currency)}</span>}
+        {item.budget.remainingCents >= 0 ? `restam ${formatCurrency(item.budget.remainingCents, currency)}` : <span className="font-semibold text-[var(--color-over)]">excedente de {formatCurrency(-item.budget.remainingCents, currency)}</span>}
       </span>
     </span>
   );

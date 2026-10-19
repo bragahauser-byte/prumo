@@ -76,7 +76,7 @@ export function BillsScreen() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="p-5"><p className="text-sm text-[var(--color-muted)]">A pagar até o fim do mês</p><p className="tabular mt-1 text-2xl font-semibold">{formatCurrency(toPay, currency)}</p></Card>
         <Card className="p-5"><p className="text-sm text-[var(--color-muted)]">A receber até o fim do mês</p><p className="tabular mt-1 text-2xl font-semibold text-[var(--color-success)]">{formatCurrency(toReceive, currency)}</p></Card>
-        <Card className={`p-5 ${overdue.length ? "bg-[var(--color-error-soft)]" : ""}`}><p className={`text-sm ${overdue.length ? "text-[var(--color-error)]" : "text-[var(--color-muted)]"}`}>Contas atrasadas</p><p className={`tabular mt-1 text-2xl font-semibold ${overdue.length ? "text-[var(--color-error)]" : ""}`}>{overdue.length ? formatCurrency(overdue.reduce((total, item) => total + item.amountCents, 0), currency) : "Nenhuma"}</p></Card>
+        <Card className={`p-5 ${overdue.length ? "bg-[var(--color-over-soft)]" : ""}`}><p className={`text-sm ${overdue.length ? "text-[var(--color-over)]" : "text-[var(--color-muted)]"}`}>Contas atrasadas</p><p className={`tabular mt-1 text-2xl font-semibold ${overdue.length ? "text-[var(--color-error)]" : ""}`}>{overdue.length ? formatCurrency(overdue.reduce((total, item) => total + item.amountCents, 0), currency) : "Nenhuma"}</p></Card>
         <Card className="p-5"><p className="text-sm text-[var(--color-muted)]">Renda comprometida</p><p className="tabular mt-1 text-2xl font-semibold">{committedShare === null ? "—" : `${committedShare}%`}</p><p className="mt-0.5 text-xs text-[var(--color-muted)]">despesas do mês ÷ receitas</p></Card>
       </div>
 
@@ -91,7 +91,7 @@ export function BillsScreen() {
         <Card>
           {groups.length ? groups.map((group) => (
             <section key={group.id} aria-labelledby={`group-${group.id}`} className="mb-4 last:mb-0">
-              <h2 id={`group-${group.id}`} className={`text-xs font-semibold uppercase tracking-[0.04em] ${group.id === "overdue" ? "text-[var(--color-error)]" : "text-[var(--color-muted)]"}`}>{group.title}</h2>
+              <h2 id={`group-${group.id}`} className={`text-xs font-semibold uppercase tracking-[0.04em] ${group.id === "overdue" ? "text-[var(--color-over)]" : "text-[var(--color-muted)]"}`}>{group.title}</h2>
               <ul className="divide-y divide-[var(--color-border)]">
                 {group.items.map((item: FinanceExpense) => <TransactionRow key={item.id} transaction={item} currency={currency} showSettle />)}
               </ul>

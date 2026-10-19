@@ -14,7 +14,8 @@ import { currentMonth } from "@/lib/dates";
 import { formatCurrency, formatMonthKey } from "@/lib/formatting";
 
 const incomeColor = "#9FE870";
-const expenseColor = "#C7271A";
+/** Saídas em cinza escuro: valores gastos não usam vermelho nem a cor de destaque. */
+const expenseColor = "#6A6C6A";
 
 function compactCurrency(cents: number, currency: string) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(cents / 100);
@@ -25,7 +26,7 @@ function Change({ value, higherIsGood }: { value: number | null; higherIsGood: b
   if (value === 0) return <span className="text-xs text-[var(--color-muted)]">estável</span>;
   const good = value > 0 === higherIsGood;
   const Icon = value > 0 ? TrendingUp : TrendingDown;
-  return <span className={`inline-flex items-center gap-1 text-xs font-semibold ${good ? "text-[var(--color-success)]" : "text-[var(--color-error)]"}`}><Icon size={14} aria-hidden="true" />{value > 0 ? "+" : ""}{value}%</span>;
+  return <span className={`inline-flex items-center gap-1 text-xs font-semibold ${good ? "text-[var(--color-success)]" : "text-[var(--color-muted)]"}`}><Icon size={14} aria-hidden="true" />{value > 0 ? "+" : ""}{value}%</span>;
 }
 
 export function ReportsScreen() {
@@ -65,7 +66,7 @@ export function ReportsScreen() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <p className="text-sm text-[var(--color-muted)]">{isCurrent ? "Estimativa de sobra no fim do mês" : "Saldo projetado no fim do mês"}</p>
-          <p className={`tabular mt-2 text-4xl font-semibold ${projectionCents !== null && projectionCents < 0 ? "text-[var(--color-error)]" : ""}`}>{projectionCents === null ? "—" : formatCurrency(projectionCents, currency)}</p>
+          <p className="tabular mt-2 text-4xl font-semibold">{projectionCents === null ? "—" : formatCurrency(projectionCents, currency)}</p>
           <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
             {balanceCents !== null
               ? "Saldo atual + receitas a receber − contas a pagar até o último dia do mês."
@@ -74,7 +75,7 @@ export function ReportsScreen() {
         </Card>
         <Card>
           <p className="text-sm text-[var(--color-muted)]">Resultado do mês</p>
-          <p className={`tabular mt-2 text-2xl font-semibold ${net < 0 ? "text-[var(--color-error)]" : ""}`}>{net >= 0 ? "+" : "−"}{formatCurrency(Math.abs(net), currency)}</p>
+          <p className="tabular mt-2 text-2xl font-semibold">{net >= 0 ? "+" : "−"}{formatCurrency(Math.abs(net), currency)}</p>
           <div className="mt-1 flex items-center gap-2"><Change value={percentChange(net, previousNet)} higherIsGood /><span className="text-xs text-[var(--color-muted)]">vs. {formatMonthKey(previousMonth).split(" ")[0]}</span></div>
           <dl className="mt-4 space-y-1 text-sm">
             <div className="flex justify-between"><dt className="text-[var(--color-muted)]">Receitas</dt><dd className="tabular font-medium text-[var(--color-income)]">{formatCurrency(summary.incomeCents, currency)}</dd></div>

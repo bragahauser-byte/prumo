@@ -20,7 +20,7 @@ function Comparison({ current, previous, previousLabel, higherIsGood }: { curren
   const good = change > 0 === higherIsGood;
   const Icon = change > 0 ? TrendingUp : TrendingDown;
   return (
-    <p className={`mt-1 inline-flex items-center gap-1 text-xs font-semibold ${good ? "text-[var(--color-success)]" : "text-[var(--color-error)]"}`}>
+    <p className={`mt-1 inline-flex items-center gap-1 text-xs font-semibold ${good ? "text-[var(--color-success)]" : "text-[var(--color-muted)]"}`}>
       <Icon size={14} aria-hidden="true" />
       {change > 0 ? "+" : ""}{change}% vs. {previousLabel}
     </p>

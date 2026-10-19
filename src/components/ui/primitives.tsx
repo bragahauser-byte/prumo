@@ -91,7 +91,7 @@ export function Segmented<T extends string>({
 
 export function Meter({ value, level = "ok", label }: { value: number; level?: "ok" | "warning" | "reached" | "over"; label: string }) {
   const percent = Math.round(Math.max(0, Math.min(1, value)) * 100);
-  const color = level === "over" ? "bg-[var(--color-error)]" : level === "reached" ? "bg-[var(--color-warning)]" : level === "warning" ? "bg-[var(--color-warning-fill)]" : "bg-[var(--color-action)]";
+  const color = level === "over" ? "bg-[var(--color-over)]" : level === "reached" ? "bg-[var(--color-warning)]" : level === "warning" ? "bg-[var(--color-warning-fill)]" : "bg-[var(--color-action)]";
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-soft)]" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
       <div className={`h-full rounded-full transition-[width] duration-500 ${color}`} style={{ width: `${percent}%` }} />

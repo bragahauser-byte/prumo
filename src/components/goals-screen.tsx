@@ -23,7 +23,7 @@ export const paceLabels: Record<GoalPaceStatus, { label: string; className: stri
   ahead: { label: "Adiantada", className: "bg-[var(--color-success-soft)] text-[var(--color-success)]" },
   on_track: { label: "No ritmo", className: "bg-[var(--color-success-soft)] text-[var(--color-success)]" },
   behind: { label: "Abaixo do ritmo", className: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]" },
-  overdue: { label: "Prazo vencido", className: "bg-[var(--color-error-soft)] text-[var(--color-error)]" },
+  overdue: { label: "Prazo vencido", className: "bg-[var(--color-over-soft)] text-[var(--color-over)]" },
   no_deadline: { label: "Sem prazo", className: "bg-[var(--color-soft)] text-[var(--color-muted)]" },
 };
 

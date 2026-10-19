@@ -22,7 +22,7 @@ export const budgetLevelLabels: Record<BudgetLevel, { label: string; className: 
   ok: { label: "Normal", className: "bg-[var(--color-success-soft)] text-[var(--color-success)]" },
   warning: { label: "Próximo do limite", className: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]" },
   reached: { label: "Limite atingido", className: "bg-[var(--color-warning-soft)] text-[var(--color-warning)]" },
-  over: { label: "Ultrapassado", className: "bg-[var(--color-error-soft)] text-[var(--color-error)]" },
+  over: { label: "Ultrapassado", className: "bg-[var(--color-over-soft)] text-[var(--color-over)]" },
 };
 
 const alertOptions: { value: number | null; label: string; description: string }[] = [
@@ -105,7 +105,7 @@ export function BudgetsScreen() {
             size={200}
             stroke={14}
             value={totalLimit ? totalSpent / totalLimit : 0}
-            color={totalSpent > totalLimit ? "var(--color-error)" : totalSpent >= totalLimit * 0.8 ? "var(--color-warning)" : "var(--color-action)"}
+            color={totalSpent > totalLimit ? "var(--color-over)" : totalSpent >= totalLimit * 0.8 ? "var(--color-warning)" : "var(--color-action)"}
             label={`${percent(totalSpent / Math.max(totalLimit, 1))}% do orçamento total usado`}
           >
             <span className="tabular text-3xl font-semibold">{percent(totalSpent / Math.max(totalLimit, 1))}%</span>
@@ -113,7 +113,7 @@ export function BudgetsScreen() {
           </ProgressRing>
           <div className="w-full flex-1 space-y-3 text-center sm:text-left">
             <p className="text-sm text-[var(--color-muted)]">{totalSpent > totalLimit ? "Acima do total planejado" : "Ainda cabe no orçamento"}</p>
-            <p className={`tabular text-4xl font-semibold ${totalSpent > totalLimit ? "text-[var(--color-error)]" : ""}`}>{formatCurrency(Math.abs(totalLimit - totalSpent), currency)}</p>
+            <p className={`tabular text-4xl font-semibold ${totalSpent > totalLimit ? "text-[var(--color-over)]" : ""}`}>{formatCurrency(Math.abs(totalLimit - totalSpent), currency)}</p>
             <p className="text-sm text-[var(--color-muted)]">{formatCurrency(totalSpent, currency)} gastos de {formatCurrency(totalLimit, currency)} planejados em {budgets.length} {budgets.length === 1 ? "categoria" : "categorias"}.</p>
             <Link href={`/reports/categories?month=${month}`} className={`${textButton} -ml-3`}><PieChart size={18} aria-hidden="true" /> Análise por categoria</Link>
           </div>
@@ -129,7 +129,7 @@ export function BudgetsScreen() {
       {alerts.length && isCurrent ? (
         <div className="space-y-2" role="status">
           {alerts.map((item) => (
-            <p key={item.category} className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${item.level === "over" ? "bg-[var(--color-error-soft)] text-[var(--color-error)]" : "bg-[var(--color-warning-soft)] text-[var(--color-warning)]"}`}>
+            <p key={item.category} className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${item.level === "over" ? "bg-[var(--color-over-soft)] text-[var(--color-over)]" : "bg-[var(--color-warning-soft)] text-[var(--color-warning)]"}`}>
               <AlertTriangle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
               {item.level === "over"
                 ? `${item.category} passou ${formatCurrency(item.spentCents - item.limitCents, currency)} do limite de ${formatCurrency(item.limitCents, currency)}.`
@@ -164,7 +164,7 @@ export function BudgetsScreen() {
                         <div><dt className="text-[var(--color-muted)]">Limite</dt><dd className="tabular text-sm font-semibold">{formatCurrency(item.limitCents, currency)}</dd></div>
                         <div className="text-right">
                           <dt className="text-[var(--color-muted)]">{item.remainingCents >= 0 ? "Restante" : "Excedente"}</dt>
-                          <dd className={`tabular text-sm font-semibold ${item.remainingCents < 0 ? "text-[var(--color-error)]" : ""}`}>{formatCurrency(Math.abs(item.remainingCents), currency)}</dd>
+                          <dd className={`tabular text-sm font-semibold ${item.remainingCents < 0 ? "text-[var(--color-over)]" : ""}`}>{formatCurrency(Math.abs(item.remainingCents), currency)}</dd>
                         </div>
                       </dl>
                       <p className="tabular mt-1 text-xs text-[var(--color-muted)]">{percent(item.ratio)}% do orçamento utilizado</p>

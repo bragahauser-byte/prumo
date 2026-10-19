@@ -351,7 +351,7 @@ export function AddFlow() {
                 <div className="min-h-6 flex-1" />
 
                 {budgetNotice ? (
-                  <p className={`mb-3 flex items-start gap-2 text-sm ${budgetNotice.tone === "over" ? "text-[var(--color-error)]" : "text-[var(--color-warning)]"}`} role="status">
+                  <p className={`mb-3 flex items-start gap-2 text-sm ${budgetNotice.tone === "over" ? "text-[var(--color-over)]" : "text-[var(--color-warning)]"}`} role="status">
                     <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
                     <span>{budgetNotice.text}{budgetNotice.tone === "over" ? " O gasto é registrado normalmente." : ""}</span>
                   </p>
@@ -437,7 +437,7 @@ function Receipt({
           <h2 className="mt-10 text-xl font-semibold">Detalhes</h2>
           <ul className="mt-4 space-y-5 pb-6">
             {details.filter(Boolean).map((detail) => detail ? (
-              <li key={detail.title} className={`flex gap-4 ${detail.tone === "over" ? "text-[var(--color-error)]" : detail.tone === "warning" ? "text-[var(--color-warning)]" : ""}`}>
+              <li key={detail.title} className={`flex gap-4 ${detail.tone === "over" ? "text-[var(--color-over)]" : detail.tone === "warning" ? "text-[var(--color-warning)]" : ""}`}>
                 <span className="mt-0.5 shrink-0">{detail.icon}</span>
                 <span><span className="block text-base font-semibold">{detail.title}</span><span className="block text-sm">{detail.text}</span></span>
               </li>
