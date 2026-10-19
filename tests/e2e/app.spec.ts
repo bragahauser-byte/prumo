@@ -61,21 +61,15 @@ test("onboards a first-time user, saves preferences locally, and restores them a
 
   await page.goto("/settings");
   await page.getByRole("link", { name: /Perfil e preferências/ }).click();
-  await expect(page.getByLabel("Nome")).toHaveValue("Ana");
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByRole("radio", { name: /Dólar americano/ })).toBeChecked();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await page.getByLabel("Valor líquido mensal").fill("3600");
-  for (let step = 0; step < 4; step += 1) await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByLabel("Aceitar tudo")).toBeChecked();
-  await page.getByRole("button", { name: "Concordar e continuar" }).click();
-  await page.getByRole("button", { name: "Agora não" }).click();
+  await expect(page).toHaveURL(/\/settings\/profile$/);
+  await expect(page.getByLabel("Como podemos te chamar?")).toHaveValue("Ana");
+  await expect(page.getByLabel("Moeda principal")).toHaveValue("USD");
+  await page.getByLabel("Renda líquida mensal (opcional)").fill("3600");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
   await expect(page).toHaveURL(/\/settings$/);
   await page.reload();
   await page.getByRole("link", { name: /Perfil e preferências/ }).click();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await page.getByRole("button", { name: "Continuar" }).click();
-  await expect(page.getByLabel("Valor líquido mensal")).toHaveValue("3.600");
+  await expect(page.getByLabel("Renda líquida mensal (opcional)")).toHaveValue("3.600");
 });
 
 test("keeps the selected tab and layout consistent across the main screens on mobile", async ({ page }) => {
@@ -85,7 +79,7 @@ test("keeps the selected tab and layout consistent across the main screens on mo
 
   const screens = [
     { path: "/overview", title: "Início", tab: "/overview" },
-    { path: "/transactions", title: "Transações", tab: "/transactions" },
+    { path: "/transactions", title: "Extrato", tab: "/transactions" },
     { path: "/goals", title: "Metas", tab: "/goals" },
     { path: "/reports", title: "Relatórios", tab: "/reports" },
     { path: "/bills", title: "Agenda" },
@@ -103,11 +97,11 @@ test("keeps the selected tab and layout consistent across the main screens on mo
     expect(await hasHorizontalOverflow(page), `${screen.path} should not overflow horizontally`).toBe(false);
   }
 
-  // Cabeçalho a 64 px do topo e barra de navegação a 40 px da borda inferior.
+  // Cabeçalho a 64 px do topo e barra de navegação a 20 px da borda inferior.
   const headerTop = await page.getByRole("heading", { level: 1 }).evaluate((element) => element.getBoundingClientRect().top);
   expect(headerTop).toBe(64);
   const navigationBox = await page.getByRole("navigation", { name: "Navegação principal" }).last().boundingBox();
-  expect(844 - (navigationBox!.y + navigationBox!.height)).toBe(40);
+  expect(844 - (navigationBox!.y + navigationBox!.height)).toBe(20);
 });
 
 test("registers an expense amount first, picks the suggested category and marks it as paid later", async ({ page }) => {
@@ -253,11 +247,12 @@ test("lists an important alert in the notification center when a bill is due tom
   await page.getByLabel("Data", { exact: true }).fill(tomorrow);
   await page.getByRole("button", { name: "Registrar gasto" }).click();
   await page.getByRole("button", { name: "Concluir" }).click();
-  await page.goto("/overview");
-  await page.getByRole("button", { name: "Notificações, 1 nova" }).click();
+  await page.goto("/settings");
+  await expect(page.getByText("1 aviso novo")).toBeVisible();
+  await page.getByRole("button", { name: /Central de notificações/ }).click();
   await expect(page.getByText("Vence amanhã: Conta de luz")).toBeVisible();
   await page.getByRole("button", { name: "Fechar" }).click();
-  await expect(page.getByRole("button", { name: "Notificações", exact: true })).toBeVisible();
+  await expect(page.getByText("Avisos, lembretes e insights")).toBeVisible();
 });
 
 async function registerExpense(page: Page, digits: string, description: string, category: RegExp) {

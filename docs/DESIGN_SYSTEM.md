@@ -32,11 +32,13 @@ No desktop, a navegação lateral é estável; no celular, uma barra flutuante t
 | Bordas | `--color-border` / `--color-border-overlay` | `#E5E7E3` / `#C9CCC6` | divisores, bordas de controles e campos ativos |
 | Sentimento | `--color-success` / `--color-warning` (+ `-fill`) / `--color-error` | `#2F5711` / `#8A6100` (`#EDC843`) / `#A8200D` | sucesso e metas batidas, atenção, erro e saldo negativo; cada um com `-soft` para fundos |
 
-**Entradas e saídas:** `--color-income` (`#2F5711`) para o que entra e `--color-expense` (`#C7271A`) para o que sai, em valores, totais e gráficos. Gráficos: despesas em vermelho e receitas em verde vivo (contraste alto entre si). Metas no anel usam `goalShades`, alternando tons escuros e claros para que fatias vizinhas nunca se confundam; cada fatia tem legenda com nome e porcentagem.
+**Destaque da marca:** `--color-highlight` (`#F26B1D`, laranja), com `-pressed`, `-soft` e `--color-on-highlight`. Usado só no item ativo da barra de navegação e no assistente de IA; nunca para sinalizar gasto.
+
+**Entradas e saídas:** `--color-income` (`#2F5711`) para o que entra; `--color-expense` aponta para a cor do texto: valores gastos não usam vermelho (gera ansiedade) nem o laranja de destaque. Gráficos: despesas em cinza escuro e receitas em verde vivo. Atraso e limite ultrapassado usam âmbar (`--color-over`); o vermelho (`--color-error`) fica para erros do sistema e ações destrutivas. Metas no anel usam `goalShades`, alternando tons escuros e claros para que fatias vizinhas nunca se confundam; cada fatia tem legenda com nome e porcentagem.
 
 ## Tipografia
 
-Geist via `next/font`. Escala: **12, 14, 16, 20, 24, 28 e 32 px** (`text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl`, `text-4xl`; `text-lg` foi redefinido para 20 px). Título e subtítulo do cabeçalho usam 24 px; títulos de fluxos em tela cheia (onboarding, criação de meta), 28 a 32 px; valores de destaque, 32 px; números usam algarismos tabulares (`.tabular`). **Exceção única:** o valor em destaque do teclado e do comprovante usa `text-display` (64 px, reduz para 52/44 px em valores longos), para manter a proporção das referências de registro.
+Inter via `next/font` (auto-hospedada, `display: swap`, fallback do sistema). Hierarquia por tons de cinza (`--color-text`, `--color-muted`, `--color-tertiary`, `--color-quaternary`) e pesos regular, medium e semibold (`--font-weight-*`); estilos prontos `type-title`, `type-heading`, `type-body`, `type-label` e `type-caption`. Nenhum texto abaixo de 12 px (`--font-size-min`). Escala: **12, 14, 16, 20, 24, 28 e 32 px** (`text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl`, `text-4xl`; `text-lg` foi redefinido para 20 px). Título e subtítulo do cabeçalho usam 24 px; títulos de fluxos em tela cheia (onboarding, criação de meta), 28 a 32 px; valores de destaque, 32 px; números usam algarismos tabulares (`.tabular`). **Exceção única:** o valor em destaque do teclado e do comprovante usa `text-display` (64 px, reduz para 52/44 px em valores longos), para manter a proporção das referências de registro.
 
 ## Ícones e ilustrações
 
