@@ -11,6 +11,7 @@ import { goalProgress } from "@/domain/planning";
 import { asset } from "@/lib/base-path";
 import { todayISO } from "@/lib/dates";
 import { formatCurrency } from "@/lib/formatting";
+import { hapticSuccess } from "@/lib/haptics";
 import type { CurrencyCode } from "@/lib/finance/repository";
 
 const celebratedKey = "prumo:goals:celebrated";
@@ -78,7 +79,7 @@ export function GoalCelebration({
   }, [onClose]);
 
   useEffect(() => {
-    navigator.vibrate?.([40, 70, 40, 70, 120]);
+    hapticSuccess();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const focusTimer = window.setTimeout(() => primaryRef.current?.focus(), 400);
@@ -128,7 +129,7 @@ export function GoalCelebration({
             </div>
           </div>
 
-          <h1 id="celebration-title" className="mt-2 text-4xl font-black uppercase leading-tight tracking-[-0.01em] text-[var(--color-bright-green)]" aria-label={title}>
+          <h1 id="celebration-title" className="mt-2 text-4xl font-bold uppercase leading-tight tracking-[-0.01em] text-[var(--color-bright-green)]" aria-label={title}>
             {[...title].map((letter, index) => (
               <span key={index} aria-hidden="true" className="inline-block whitespace-pre animate-[letter-in_0.5s_cubic-bezier(0.2,0.9,0.3,1.3)_both]" style={{ animationDelay: `${0.55 + index * 0.045}s` }}>{letter}</span>
             ))}

@@ -4,6 +4,7 @@ import { ChevronLeft, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { currencyDecimals } from "@/domain/currencies";
 import { currencySymbol } from "@/lib/formatting";
+import { hapticTap } from "@/lib/haptics";
 
 const maxIntegerDigits = 9;
 
@@ -127,7 +128,7 @@ export function KeypadGrid({ onPress, decimals = 2 }: { onPress: (key: string) =
         <button
           key={key}
           type="button"
-          onClick={() => onPress(key)}
+          onClick={() => { if (/^\d$/.test(key)) hapticTap(); onPress(key); }}
           aria-label={key === "backspace" ? "Apagar" : key === "," ? "Vírgula" : key}
           className="flex h-[60px] items-center justify-center rounded-2xl text-2xl font-medium transition-colors active:bg-[#163300]/10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current"
         >
