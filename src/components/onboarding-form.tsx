@@ -117,6 +117,7 @@ export function OnboardingForm({
       onboardingCompleted: true,
       avatarDataUrl: preferences?.avatarDataUrl ?? null,
       notificationSettings: preferences?.notificationSettings ?? defaultNotificationSettings,
+      manualRates: preferences?.manualRates ?? {},
     };
 
     try {

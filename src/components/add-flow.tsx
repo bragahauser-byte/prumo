@@ -136,6 +136,7 @@ export function AddFlow() {
         await saveExpense({
           id: createFinanceId(), kind, description: name, amountCents, category, date, status,
           paidOn: isPaid ? date : null, notes: null, recurringRuleId: ruleId, occurrenceDate: ruleId ? date : null,
+          accountId: null, original: null,
         });
         if (ruleId) await generateOccurrences(ruleId, addDays(today, 90));
       }

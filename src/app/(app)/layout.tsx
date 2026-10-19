@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { ExchangeRatesProvider } from "@/components/exchange-rates";
 import { FinanceProvider } from "@/components/finance-provider";
 import { createSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -13,7 +14,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <FinanceProvider mode={isSupabaseConfigured() ? "supabase" : "local"}>
-      <AppShell>{children}</AppShell>
+      <ExchangeRatesProvider>
+        <AppShell>{children}</AppShell>
+      </ExchangeRatesProvider>
     </FinanceProvider>
   );
 }

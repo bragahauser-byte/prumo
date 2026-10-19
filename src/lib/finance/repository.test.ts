@@ -12,7 +12,7 @@ describe("local finance repository", () => {
 
   it("starts empty and persists onboarding preferences after a new repository is created", async () => {
     const first = createLocalFinanceRepository();
-    expect(await first.load()).toEqual({ preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [] });
+    expect(await first.load()).toEqual({ preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [], accounts: [], investments: [] });
 
     const preferences: FinancePreferences = {
       displayName: "Ana",
@@ -27,6 +27,7 @@ describe("local finance repository", () => {
       onboardingCompleted: true,
       avatarDataUrl: "data:image/jpeg;base64,AAAA",
       notificationSettings: defaultNotificationSettings,
+      manualRates: {},
     };
     await first.savePreferences(preferences);
 
@@ -47,7 +48,7 @@ describe("local finance repository", () => {
       paidOn: null,
       notes: null,
       recurringRuleId: null,
-      occurrenceDate: null,
+      occurrenceDate: null, accountId: null, original: null,
     };
 
     await repository.saveExpense(expense);
@@ -102,7 +103,7 @@ describe("local finance repository", () => {
   it("reads data saved before receitas, orçamentos e metas existed", async () => {
     localStorage.setItem("personal-finance:data:v1", JSON.stringify({
       preferences: null,
-      expenses: [{ id: "old", description: "Internet", amountCents: 9990, category: "Contas", date: "2026-10-01", status: "paid", paidOn: "2026-10-01", notes: null, recurringRuleId: null, occurrenceDate: null }],
+      expenses: [{ id: "old", description: "Internet", amountCents: 9990, category: "Contas", date: "2026-10-01", status: "paid", paidOn: "2026-10-01", notes: null, recurringRuleId: null, occurrenceDate: null, accountId: null, original: null }],
       recurringRules: [{ id: "rule-old", name: "Aluguel", amountCents: 150000, category: "Moradia", frequency: "monthly", startsOn: "2026-10-05", dueDay: 5, endsOn: null, isActive: true, isVariable: false, notes: null }],
     }));
     const snapshot = await createLocalFinanceRepository().load();
@@ -159,5 +160,40 @@ describe("local finance repository", () => {
     expect(preferences?.notificationSettings.reminders.weeklyReview.enabled).toBe(false);
     expect(preferences?.notificationSettings.reminders.monthlyBudget.enabled).toBe(false);
     expect(preferences?.notificationSettings.reminders.billsAhead.enabled).toBe(false);
+  });
+
+  it("reads data saved before accounts, investments and other currencies existed", async () => {
+    localStorage.setItem("personal-finance:data:v1", JSON.stringify({
+      preferences: null,
+      expenses: [{ id: "e1", kind: "expense", description: "Café", amountCents: 900, category: "Alimentação", date: "2026-10-10", status: "paid", paidOn: "2026-10-10", notes: null, recurringRuleId: null, occurrenceDate: null }],
+      recurringRules: [],
+    }));
+    const snapshot = await createLocalFinanceRepository().load();
+    expect(snapshot.accounts).toEqual([]);
+    expect(snapshot.investments).toEqual([]);
+    expect(snapshot.expenses[0]).toMatchObject({ accountId: null, original: null });
+  });
+
+  it("persists accounts and investments and unlinks movements when an account is removed", async () => {
+    const repository = createLocalFinanceRepository();
+    await repository.saveAccount({ id: "acc", name: "Wise", bank: "wise", currency: "USD", balanceCents: 10000, balanceReportedOn: "2026-10-10", createdOn: "2026-10-10" });
+    await repository.saveExpense({
+      id: "e1", kind: "income", description: "Freela", amountCents: 54000, category: "Freelance", date: "2026-10-11", status: "paid", paidOn: "2026-10-11",
+      notes: null, recurringRuleId: null, occurrenceDate: null, accountId: "acc",
+      original: { currency: "USD", amountCents: 10000, rate: 5.4, rateDate: "2026-10-10", manual: false },
+    });
+    await repository.saveInvestment({ id: "inv", type: "tesouro", institution: "Tesouro Direto", description: null, appliedCents: 100000, currentCents: null, date: "2026-10-01", updatedOn: null });
+
+    const loaded = await createLocalFinanceRepository().load();
+    expect(loaded.accounts[0].currency).toBe("USD");
+    expect(loaded.expenses[0].original?.amountCents).toBe(10000);
+    expect(loaded.investments[0].type).toBe("tesouro");
+
+    await repository.deleteAccount("acc");
+    await repository.deleteInvestment("inv");
+    const after = await repository.load();
+    expect(after.accounts).toEqual([]);
+    expect(after.investments).toEqual([]);
+    expect(after.expenses[0].accountId).toBeNull();
   });
 });

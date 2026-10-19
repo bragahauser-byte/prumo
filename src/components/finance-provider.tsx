@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   createLocalFinanceRepository,
+  type FinanceAccount,
+  type FinanceInvestment,
   type FinanceBudget,
   type FinanceExpense,
   type FinancePreferences,
@@ -33,10 +35,14 @@ export type FinanceContextValue = FinanceSnapshot & {
   deleteBudget: (category: string) => Promise<void>;
   saveSavingsGoal: (goal: FinanceSavingsGoal) => Promise<void>;
   deleteSavingsGoal: (id: string) => Promise<void>;
+  saveAccount: (account: FinanceAccount) => Promise<void>;
+  deleteAccount: (id: string) => Promise<void>;
+  saveInvestment: (investment: FinanceInvestment) => Promise<void>;
+  deleteInvestment: (id: string) => Promise<void>;
 };
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
-const emptySnapshot: FinanceSnapshot = { preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [] };
+const emptySnapshot: FinanceSnapshot = { preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [], accounts: [], investments: [] };
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Não foi possível acessar os dados financeiros.";
@@ -130,6 +136,10 @@ export function FinanceProvider({
       deleteBudget: (category) => mutate((repository) => repository.deleteBudget(category)),
       saveSavingsGoal: (goal) => mutate((repository) => repository.saveSavingsGoal(goal)),
       deleteSavingsGoal: (id) => mutate((repository) => repository.deleteSavingsGoal(id)),
+      saveAccount: (account) => mutate((repository) => repository.saveAccount(account)),
+      deleteAccount: (id) => mutate((repository) => repository.deleteAccount(id)),
+      saveInvestment: (investment) => mutate((repository) => repository.saveInvestment(investment)),
+      deleteInvestment: (id) => mutate((repository) => repository.deleteInvestment(id)),
     }}>
       {children}
     </FinanceContext.Provider>

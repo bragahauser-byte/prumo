@@ -3,6 +3,8 @@ import { generateOccurrenceDates, type RecurringFrequency } from "../../domain/r
 import type { ExpenseStatus } from "../../domain/financial";
 import type { TransactionKind } from "../../domain/categories";
 import { currencyCodes, type CurrencyCode } from "../../domain/currencies";
+import { bankIds, type BankId } from "../../domain/banks";
+import { investmentTypeIds, type InvestmentType } from "../../domain/investments";
 
 export type { CurrencyCode } from "../../domain/currencies";
 export type FinanceGoal = "control_expenses" | "remember_bills" | "understand_categories" | "track_available_balance";
@@ -47,6 +49,42 @@ export type FinancePreferences = {
   /** Foto de perfil reduzida (JPEG em data URL, até ~60 KB). */
   avatarDataUrl: string | null;
   notificationSettings: NotificationSettings;
+  /** Taxas manuais (1 unidade da moeda = X na moeda-base), usadas quando a cotação automática falha ou a pessoa prefere. */
+  manualRates: Record<string, number>;
+};
+
+/** Conta em um banco ou instituição; o saldo fica na moeda da conta. */
+export type FinanceAccount = {
+  id: string;
+  name: string;
+  bank: BankId;
+  currency: CurrencyCode;
+  balanceCents: number | null;
+  /** Data (AAAA-MM-DD) em que o saldo foi informado; movimentações pagas depois, nesta conta, ajustam o saldo. */
+  balanceReportedOn: string | null;
+  createdOn: string;
+};
+
+/** Valor original quando a movimentação foi registrada em outra moeda; amountCents guarda o valor convertido. */
+export type FinanceOriginalAmount = {
+  currency: CurrencyCode;
+  amountCents: number;
+  /** Quanto vale 1 unidade da moeda original na moeda-base no momento do registro. */
+  rate: number;
+  rateDate: string | null;
+  manual: boolean;
+};
+
+export type FinanceInvestment = {
+  id: string;
+  type: InvestmentType;
+  institution: string;
+  description: string | null;
+  appliedCents: number;
+  /** Valor atual informado pela pessoa; null quando não informado (o Prumo não estima rendimento). */
+  currentCents: number | null;
+  date: string;
+  updatedOn: string | null;
 };
 
 export type FinanceExpense = {
@@ -61,6 +99,8 @@ export type FinanceExpense = {
   notes: string | null;
   recurringRuleId: string | null;
   occurrenceDate: string | null;
+  accountId: string | null;
+  original: FinanceOriginalAmount | null;
 };
 
 export type FinanceRecurringRule = {
@@ -109,6 +149,8 @@ export type FinanceSnapshot = {
   recurringRules: FinanceRecurringRule[];
   budgets: FinanceBudget[];
   savingsGoals: FinanceSavingsGoal[];
+  accounts: FinanceAccount[];
+  investments: FinanceInvestment[];
 };
 
 export interface FinanceRepository {
@@ -125,6 +167,11 @@ export interface FinanceRepository {
   deleteBudget(category: string): Promise<void>;
   saveSavingsGoal(goal: FinanceSavingsGoal): Promise<void>;
   deleteSavingsGoal(id: string): Promise<void>;
+  saveAccount(account: FinanceAccount): Promise<void>;
+  /** Remove a conta; as movimentações dela continuam, sem conta vinculada. */
+  deleteAccount(id: string): Promise<void>;
+  saveInvestment(investment: FinanceInvestment): Promise<void>;
+  deleteInvestment(id: string): Promise<void>;
 }
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -155,6 +202,36 @@ const preferencesSchema = z.object({
   onboardingCompleted: z.boolean(),
   avatarDataUrl: avatarSchema.nullable().default(null),
   notificationSettings: notificationSettingsSchema.default(defaultNotificationSettings),
+  manualRates: z.record(z.string(), z.number().positive()).default({}),
+});
+
+const originalAmountSchema = z.object({
+  currency: z.enum(currencyCodes),
+  amountCents: z.number().int().positive(),
+  rate: z.number().positive(),
+  rateDate: dateSchema.nullable(),
+  manual: z.boolean(),
+});
+
+const accountSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(60),
+  bank: z.enum(bankIds),
+  currency: z.enum(currencyCodes),
+  balanceCents: z.number().int().nullable(),
+  balanceReportedOn: dateSchema.nullable(),
+  createdOn: dateSchema,
+});
+
+const investmentSchema = z.object({
+  id: z.string().min(1),
+  type: z.enum(investmentTypeIds),
+  institution: z.string().min(1).max(60),
+  description: z.string().max(80).nullable(),
+  appliedCents: z.number().int().positive(),
+  currentCents: z.number().int().nonnegative().nullable(),
+  date: dateSchema,
+  updatedOn: dateSchema.nullable(),
 });
 
 const kindSchema = z.enum(["expense", "income", "transfer"]);
@@ -171,6 +248,8 @@ const expenseSchema = z.object({
   notes: z.string().nullable(),
   recurringRuleId: z.string().nullable(),
   occurrenceDate: z.string().nullable(),
+  accountId: z.string().nullable().default(null),
+  original: originalAmountSchema.nullable().default(null),
 });
 
 const recurringRuleSchema = z.object({
@@ -216,12 +295,14 @@ const snapshotSchema = z.object({
   recurringRules: z.array(recurringRuleSchema),
   budgets: z.array(budgetSchema).default([]),
   savingsGoals: z.array(savingsGoalSchema).default([]),
+  accounts: z.array(accountSchema).default([]),
+  investments: z.array(investmentSchema).default([]),
 });
 
 const storageKey = "personal-finance:data:v1";
 
 function emptySnapshot(): FinanceSnapshot {
-  return { preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [] };
+  return { preferences: null, expenses: [], recurringRules: [], budgets: [], savingsGoals: [], accounts: [], investments: [] };
 }
 
 function createId() {
@@ -315,6 +396,8 @@ export function createLocalFinanceRepository(
           notes: rule.notes,
           recurringRuleId: rule.id,
           occurrenceDate: date,
+          accountId: null,
+          original: null,
         }));
       write({ ...snapshot, expenses: [...generated, ...snapshot.expenses] });
       return generated.length;
@@ -337,6 +420,32 @@ export function createLocalFinanceRepository(
     async deleteSavingsGoal(id) {
       const snapshot = read();
       write({ ...snapshot, savingsGoals: snapshot.savingsGoals.filter((goal) => goal.id !== id) });
+    },
+    async saveAccount(account) {
+      const snapshot = read();
+      const existingIndex = snapshot.accounts.findIndex((item) => item.id === account.id);
+      if (existingIndex >= 0) snapshot.accounts[existingIndex] = account;
+      else snapshot.accounts.push(account);
+      write(snapshot);
+    },
+    async deleteAccount(id) {
+      const snapshot = read();
+      write({
+        ...snapshot,
+        accounts: snapshot.accounts.filter((account) => account.id !== id),
+        expenses: snapshot.expenses.map((expense) => expense.accountId === id ? { ...expense, accountId: null } : expense),
+      });
+    },
+    async saveInvestment(investment) {
+      const snapshot = read();
+      const existingIndex = snapshot.investments.findIndex((item) => item.id === investment.id);
+      if (existingIndex >= 0) snapshot.investments[existingIndex] = investment;
+      else snapshot.investments.push(investment);
+      write(snapshot);
+    },
+    async deleteInvestment(id) {
+      const snapshot = read();
+      write({ ...snapshot, investments: snapshot.investments.filter((item) => item.id !== id) });
     },
   };
 }

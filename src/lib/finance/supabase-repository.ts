@@ -6,7 +6,10 @@ import {
   parseSignedCurrencyToCents,
 } from "../../domain/financial";
 import type {
+  FinanceAccount,
   FinanceBudget,
+  FinanceInvestment,
+  FinanceOriginalAmount,
   FinanceExpense,
   FinancePreferences,
   FinanceRecurringRule,
@@ -34,6 +37,10 @@ function balanceToCents(value: string | number | null) {
   return cents;
 }
 
+function nullableCents(value: string | number | null) {
+  return value === null ? null : amountToCents(value);
+}
+
 function throwOnError(error: { message: string } | null) {
   if (error) throw new Error("Não foi possível sincronizar os dados financeiros.");
 }
@@ -54,13 +61,15 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
     mode: "supabase",
     async load(): Promise<FinanceSnapshot> {
       const ownerId = await requireUserId();
-      const [profileResult, expenseResult, ruleResult, budgetResult, goalResult, contributionResult] = await Promise.all([
-        client.from("profiles").select("display_name, monthly_income, reported_balance, balance_reported_on, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed, avatar_data, notification_settings").eq("user_id", ownerId).maybeSingle(),
-        client.from("expenses").select("id, kind, description, amount, category, due_date, status, paid_on, notes, recurring_rule_id, occurrence_date").order("due_date", { ascending: true }),
+      const [profileResult, expenseResult, ruleResult, budgetResult, goalResult, contributionResult, accountResult, investmentResult] = await Promise.all([
+        client.from("profiles").select("display_name, monthly_income, reported_balance, balance_reported_on, payday, currency, focus_areas, terms_accepted_at, notifications_enabled, onboarding_completed, avatar_data, notification_settings, manual_rates").eq("user_id", ownerId).maybeSingle(),
+        client.from("expenses").select("id, kind, description, amount, category, due_date, status, paid_on, notes, recurring_rule_id, occurrence_date, account_id, original_currency, original_amount, exchange_rate, rate_date, rate_is_manual").order("due_date", { ascending: true }),
         client.from("recurring_rules").select("id, kind, name, amount, category, frequency, interval_count, starts_on, due_day, ends_on, is_active, is_variable, notes").order("created_at", { ascending: false }),
         client.from("budgets").select("category, limit_amount, alert_at").order("category"),
         client.from("savings_goals").select("id, name, icon, target_amount, deadline, created_on").order("created_at"),
         client.from("goal_contributions").select("id, goal_id, amount, contributed_on, status").order("contributed_on"),
+        client.from("accounts").select("id, name, bank, currency, balance, balance_reported_on, created_on").order("created_at"),
+        client.from("investments").select("id, type, institution, description, applied_amount, current_amount, applied_on, updated_on").order("applied_on"),
       ]);
       throwOnError(profileResult.error);
       throwOnError(expenseResult.error);
@@ -68,6 +77,8 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
       throwOnError(budgetResult.error);
       throwOnError(goalResult.error);
       throwOnError(contributionResult.error);
+      throwOnError(accountResult.error);
+      throwOnError(investmentResult.error);
 
       const preferences: FinancePreferences | null = profileResult.data ? {
         displayName: profileResult.data.display_name,
@@ -84,6 +95,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         onboardingCompleted: profileResult.data.onboarding_completed,
         avatarDataUrl: profileResult.data.avatar_data ?? null,
         notificationSettings: parseNotificationSettings(profileResult.data.notification_settings),
+        manualRates: profileResult.data.manual_rates ?? {},
       } : null;
 
       return {
@@ -100,6 +112,14 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
           notes: expense.notes,
           recurringRuleId: expense.recurring_rule_id,
           occurrenceDate: expense.occurrence_date,
+          accountId: expense.account_id ?? null,
+          original: expense.original_currency && expense.original_amount !== null ? {
+            currency: expense.original_currency,
+            amountCents: amountToCents(expense.original_amount),
+            rate: Number(expense.exchange_rate),
+            rateDate: expense.rate_date,
+            manual: Boolean(expense.rate_is_manual),
+          } satisfies FinanceOriginalAmount : null,
         })),
         recurringRules: (ruleResult.data ?? []).map((rule): FinanceRecurringRule => ({
           id: rule.id,
@@ -137,6 +157,25 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
               status: contribution.status,
             })),
         })),
+        accounts: (accountResult.data ?? []).map((account): FinanceAccount => ({
+          id: account.id,
+          name: account.name,
+          bank: account.bank,
+          currency: account.currency,
+          balanceCents: balanceToCents(account.balance),
+          balanceReportedOn: account.balance_reported_on,
+          createdOn: account.created_on,
+        })),
+        investments: (investmentResult.data ?? []).map((investment): FinanceInvestment => ({
+          id: investment.id,
+          type: investment.type,
+          institution: investment.institution,
+          description: investment.description,
+          appliedCents: amountToCents(investment.applied_amount),
+          currentCents: nullableCents(investment.current_amount),
+          date: investment.applied_on,
+          updatedOn: investment.updated_on,
+        })),
       };
     },
     async savePreferences(preferences) {
@@ -154,6 +193,7 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         onboarding_completed: preferences.onboardingCompleted,
         avatar_data: preferences.avatarDataUrl,
         notification_settings: preferences.notificationSettings,
+        manual_rates: preferences.manualRates,
       }).eq("user_id", ownerId).select("user_id").maybeSingle();
       throwOnError(error);
       if (!data) throw new Error("Não foi possível salvar as preferências da conta.");
@@ -173,6 +213,12 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
         notes: expense.notes,
         recurring_rule_id: expense.recurringRuleId,
         occurrence_date: expense.occurrenceDate,
+        account_id: expense.accountId,
+        original_currency: expense.original?.currency ?? null,
+        original_amount: expense.original ? formatCentsAsDecimal(expense.original.amountCents) : null,
+        exchange_rate: expense.original?.rate ?? null,
+        rate_date: expense.original?.rateDate ?? null,
+        rate_is_manual: expense.original?.manual ?? null,
       });
       throwOnError(error);
     },
@@ -273,6 +319,46 @@ export function createSupabaseFinanceRepository(client: SupabaseClient): Finance
     async deleteSavingsGoal(id) {
       const ownerId = await requireUserId();
       const { error } = await client.from("savings_goals").delete().eq("id", id).eq("user_id", ownerId);
+      throwOnError(error);
+    },
+    async saveAccount(account) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("accounts").upsert({
+        id: account.id,
+        user_id: ownerId,
+        name: account.name,
+        bank: account.bank,
+        currency: account.currency,
+        balance: account.balanceCents === null ? null : formatSignedCentsAsDecimal(account.balanceCents),
+        balance_reported_on: account.balanceReportedOn,
+        created_on: account.createdOn,
+      });
+      throwOnError(error);
+    },
+    async deleteAccount(id) {
+      const ownerId = await requireUserId();
+      // A chave estrangeira desvincula as movimentações (on delete set null).
+      const { error } = await client.from("accounts").delete().eq("id", id).eq("user_id", ownerId);
+      throwOnError(error);
+    },
+    async saveInvestment(investment) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("investments").upsert({
+        id: investment.id,
+        user_id: ownerId,
+        type: investment.type,
+        institution: investment.institution,
+        description: investment.description,
+        applied_amount: formatCentsAsDecimal(investment.appliedCents),
+        current_amount: investment.currentCents === null ? null : formatCentsAsDecimal(investment.currentCents),
+        applied_on: investment.date,
+        updated_on: investment.updatedOn,
+      });
+      throwOnError(error);
+    },
+    async deleteInvestment(id) {
+      const ownerId = await requireUserId();
+      const { error } = await client.from("investments").delete().eq("id", id).eq("user_id", ownerId);
       throwOnError(error);
     },
   };

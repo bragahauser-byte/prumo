@@ -42,7 +42,7 @@ describe("consolidação de gastos por categoria", () => {
   it("recalcula ao editar ou excluir lançamentos (critério 5)", async () => {
     localStorage.clear();
     const repository = createLocalFinanceRepository();
-    const base = { kind: "expense" as const, status: "paid" as const, notes: null, recurringRuleId: null, occurrenceDate: null };
+    const base = { kind: "expense" as const, status: "paid" as const, notes: null, recurringRuleId: null, occurrenceDate: null, accountId: null, original: null };
     const first: FinanceExpense = { ...base, id: "japones", description: "Restaurante japonês", amountCents: 10000, category: "Alimentação", date: "2026-10-05", paidOn: "2026-10-05" };
     await repository.saveExpense(first);
     await repository.saveExpense({ ...base, id: "arabe", description: "Restaurante árabe", amountCents: 20000, category: "Alimentação", date: "2026-10-06", paidOn: "2026-10-06" });
