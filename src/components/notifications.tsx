@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Bell, BellRing, CalendarClock, Lightbulb, TriangleAlert, type LucideIcon } from "lucide-react";
+import { CalendarClock, Lightbulb, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
 import { useFinanceSummary } from "@/components/use-finance-summary";
 import { Sheet } from "@/components/ui/sheet";
@@ -117,63 +117,45 @@ const sections: { level: NotificationLevel; title: string; icon: LucideIcon; ton
   { level: "insight", title: "Insights", icon: Lightbulb, tone: "bg-[var(--color-action-soft)] text-[var(--color-action)]" },
 ];
 
-export function NotificationBell() {
-  const { items, unseenCount, markAllSeen } = useNotifications();
-  const [open, setOpen] = useState(false);
+/** Central de notificações (aberta pelos Ajustes): o que pede atenção, lembretes e insights. */
+export function NotificationCenter({ onClose }: { onClose: () => void }) {
+  const { items, markAllSeen } = useNotifications();
 
   function close() {
     markAllSeen();
-    setOpen(false);
+    onClose();
   }
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={unseenCount ? `Notificações, ${unseenCount} ${unseenCount === 1 ? "nova" : "novas"}` : "Notificações"}
-        className={`relative flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-border)] ${focusRing}`}
-      >
-        {unseenCount ? <BellRing size={20} aria-hidden="true" /> : <Bell size={20} aria-hidden="true" />}
-        {unseenCount ? (
-          <span className="tabular absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-error)] px-1 text-xs font-semibold text-white ring-2 ring-white" aria-hidden="true">
-            {unseenCount > 9 ? "9+" : unseenCount}
-          </span>
-        ) : null}
-      </button>
-
-      {open ? (
-        <Sheet title="Notificações" description="Só o que pede atenção, os lembretes que você escolheu e o que vale saber." onClose={close}>
-          {items.length ? (
-            <div className="space-y-6 pb-2">
-              {sections.map(({ level, title, icon: Icon, tone }) => {
-                const list = items.filter((item) => item.level === level);
-                if (!list.length) return null;
-                return (
-                  <section key={level} aria-labelledby={`notifications-${level}`}>
-                    <h3 id={`notifications-${level}`} className="text-sm font-semibold text-[var(--color-tertiary)]">{title}</h3>
-                    <ul className="mt-2 divide-y divide-[var(--color-border)]">
-                      {list.map((item) => (
-                        <li key={item.id} className="flex gap-3 py-3">
-                          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${tone}`}><Icon size={18} aria-hidden="true" /></span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-base font-semibold leading-6">{item.title}</p>
-                            <p className="mt-0.5 text-sm leading-5 text-[var(--color-muted)]">{item.body}</p>
-                            <Link href={item.href} onClick={close} className={`mt-1 inline-flex min-h-9 items-center text-sm font-semibold text-[var(--color-link)] underline underline-offset-4 ${focusRing}`}>{item.action}</Link>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="py-6 text-center text-base text-[var(--color-muted)]">Tudo em dia por aqui. Quando algo pedir atenção, aparece nesta lista.</p>
-          )}
-          <Link href="/settings/notifications" onClick={close} className={`mt-2 flex min-h-11 items-center justify-center rounded-full text-sm font-semibold text-[var(--color-link)] hover:bg-[var(--color-soft)] ${focusRing}`}>Configurar notificações e lembretes</Link>
-        </Sheet>
-      ) : null}
-    </>
+    <Sheet title="Notificações" description="Só o que pede atenção, os lembretes que você escolheu e o que vale saber." onClose={close}>
+      {items.length ? (
+        <div className="space-y-6 pb-2">
+          {sections.map(({ level, title, icon: Icon, tone }) => {
+            const list = items.filter((item) => item.level === level);
+            if (!list.length) return null;
+            return (
+              <section key={level} aria-labelledby={`notifications-${level}`}>
+                <h3 id={`notifications-${level}`} className="text-sm font-semibold text-[var(--color-tertiary)]">{title}</h3>
+                <ul className="mt-2 divide-y divide-[var(--color-border)]">
+                  {list.map((item) => (
+                    <li key={item.id} className="flex gap-3 py-3">
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${tone}`}><Icon size={18} aria-hidden="true" /></span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold leading-6">{item.title}</p>
+                        <p className="mt-0.5 text-sm leading-5 text-[var(--color-muted)]">{item.body}</p>
+                        <Link href={item.href} onClick={close} className={`mt-1 inline-flex min-h-9 items-center text-sm font-semibold text-[var(--color-link)] underline underline-offset-4 ${focusRing}`}>{item.action}</Link>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="py-6 text-center text-base text-[var(--color-muted)]">Tudo em dia por aqui. Quando algo pedir atenção, aparece nesta lista.</p>
+      )}
+      <Link href="/settings/notifications" onClick={close} className={`mt-2 flex min-h-11 items-center justify-center rounded-full text-sm font-semibold text-[var(--color-link)] hover:bg-[var(--color-soft)] ${focusRing}`}>Configurar notificações e lembretes</Link>
+    </Sheet>
   );
 }
