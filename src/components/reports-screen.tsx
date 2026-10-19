@@ -5,10 +5,12 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
 import { useFinanceSummary } from "@/components/use-finance-summary";
+import { BankLogo } from "@/components/ui/bank-logo";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { ColumnChart } from "@/components/ui/column-chart";
 import { Illustration } from "@/components/ui/illustration";
 import { Card, SectionHeader, focusRing, primaryButton, textButton } from "@/components/ui/primitives";
+import { movementsByAccount } from "@/domain/accounts";
 import { expensesByCategory, fixedVariableSplit, monthlySeries, percentChange, shiftMonth, unusualIncreases } from "@/domain/planning";
 import { currentMonth } from "@/lib/dates";
 import { formatCurrency, formatMonthKey } from "@/lib/formatting";
@@ -30,13 +32,14 @@ function Change({ value, higherIsGood }: { value: number | null; higherIsGood: b
 }
 
 export function ReportsScreen() {
-  const { expenses } = useFinance();
+  const { expenses, accounts } = useFinance();
   const [month, setMonth] = useState(currentMonth());
   const { currency, summary, previousSummary, projectionCents, balanceCents } = useFinanceSummary(month);
   const previousMonth = shiftMonth(month, -1);
   const series = useMemo(() => monthlySeries(expenses, month, 6), [expenses, month]);
   const categories = useMemo(() => expensesByCategory(expenses, month), [expenses, month]);
   const previousCategories = useMemo(() => new Map(expensesByCategory(expenses, previousMonth).map((item) => [item.category, item.amountCents])), [expenses, previousMonth]);
+  const byBank = useMemo(() => movementsByAccount(accounts, expenses, month), [accounts, expenses, month]);
   const unusual = useMemo(() => unusualIncreases(expenses, month), [expenses, month]);
   const split = fixedVariableSplit(expenses, month);
   const net = summary.incomeCents - summary.expenseCents;
@@ -119,6 +122,34 @@ export function ReportsScreen() {
           formatTick={(value) => compactCurrency(value, currency)}
         />
       </Card>
+
+      {accounts.length ? (
+        <Card aria-labelledby="banks-title">
+          <SectionHeader id="banks-title" title="Por banco" action={<Link href="/settings/accounts" className={textButton}>Contas</Link>} />
+          {byBank.length ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-[var(--color-tertiary)]">
+                  <th className="pb-2 font-medium">Conta</th>
+                  <th className="pb-2 text-right font-medium">Receitas</th>
+                  <th className="pb-2 text-right font-medium">Gastos</th>
+                  <th className="hidden pb-2 text-right font-medium sm:table-cell">Resultado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {byBank.map((row) => (
+                  <tr key={row.accountId ?? "none"}>
+                    <td className="py-2.5"><span className="flex items-center gap-2 font-medium"><BankLogo bank={row.bank} name={row.name} size={28} /><span className="truncate">{row.name}</span></span></td>
+                    <td className="tabular py-2.5 text-right text-[var(--color-income)]">{formatCurrency(row.incomeCents, currency)}</td>
+                    <td className="tabular py-2.5 text-right">{formatCurrency(row.expenseCents, currency)}</td>
+                    <td className="tabular hidden py-2.5 text-right text-[var(--color-muted)] sm:table-cell">{row.netCents >= 0 ? "+" : "−"}{formatCurrency(Math.abs(row.netCents), currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : <p className="text-sm text-[var(--color-tertiary)]">Nenhum lançamento em {formatMonthKey(month)}.</p>}
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card aria-labelledby="categories-title">

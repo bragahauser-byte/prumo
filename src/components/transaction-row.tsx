@@ -59,7 +59,9 @@ export function TransactionRow({
   const status = displayStatus(transaction, today);
   const isIncome = transaction.kind === "income";
   const isTransfer = transaction.kind === "transfer";
-  const meta = [transaction.category, showDate ? formatShortDate(transaction.date) : null, transaction.recurringRuleId ? "Fixo" : null].filter(Boolean).join(" · ");
+  const { accounts } = useFinance();
+  const account = transaction.accountId ? accounts.find((item) => item.id === transaction.accountId) : null;
+  const meta = [transaction.category, account?.name ?? null, showDate ? formatShortDate(transaction.date) : null, transaction.recurringRuleId ? "Fixo" : null].filter(Boolean).join(" · ");
 
   return (
     <li className="flex items-center gap-3 py-3">
@@ -71,6 +73,7 @@ export function TransactionRow({
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <span className={`tabular text-base font-semibold ${isIncome ? "text-[var(--color-income)]" : isTransfer ? "text-[var(--color-muted)]" : "text-[var(--color-expense)]"}`}>{isIncome ? "+" : isTransfer ? "" : "−"}{formatCurrency(transaction.amountCents, currency)}</span>
+          {transaction.original && transaction.original.currency !== currency ? <span className="tabular text-xs text-[var(--color-tertiary)]">{formatCurrency(transaction.original.amountCents, transaction.original.currency)}</span> : null}
           {status === "paid" || status === "received" ? null : <StatusChip status={status} />}
         </span>
       </Link>

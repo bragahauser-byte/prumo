@@ -5,6 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { useFinance } from "@/components/finance-provider";
+import { usePrivacy } from "@/components/privacy";
+import { BankLogo } from "@/components/ui/bank-logo";
+import { movementsByAccount } from "@/domain/accounts";
 import { TransactionRow } from "@/components/transaction-row";
 import { Sheet } from "@/components/ui/sheet";
 import { Card, Segmented, fieldClass, focusRing, labelClass, primaryButton, softButton } from "@/components/ui/primitives";
@@ -18,8 +21,11 @@ type KindFilter = "all" | TransactionKind;
 type NatureFilter = "" | "fixed" | "variable";
 
 export function TransactionsScreen() {
-  const { expenses, preferences } = useFinance();
+  const { expenses, preferences, accounts } = useFinance();
   const currency = preferences?.currency ?? "BRL";
+  const { mask } = usePrivacy();
+  const [view, setView] = useState<"date" | "bank">("date");
+  const [accountId, setAccountId] = useState("");
   const today = todayISO();
   const [kind, setKind] = useState<KindFilter>("all");
   const [search, setSearch] = useState("");
@@ -38,12 +44,13 @@ export function TransactionsScreen() {
       .filter((item) => kind === "all" || item.kind === kind)
       .filter((item) => !query || item.description.toLocaleLowerCase("pt-BR").includes(query) || item.category.toLocaleLowerCase("pt-BR").includes(query))
       .filter((item) => !category || item.category === category)
+      .filter((item) => !accountId || (accountId === "none" ? item.accountId === null : item.accountId === accountId))
       .filter((item) => !status || displayStatus(item, today) === status)
       .filter((item) => !nature || (nature === "fixed" ? item.recurringRuleId !== null : item.recurringRuleId === null))
       .filter((item) => !from || item.date >= from)
       .filter((item) => !to || item.date <= to)
       .sort((left, right) => right.date.localeCompare(left.date));
-  }, [category, expenses, from, kind, nature, search, status, to, today]);
+  }, [accountId, category, expenses, from, kind, nature, search, status, to, today]);
 
   const groups = useMemo(() => {
     const byDate = new Map<string, typeof filtered>();
@@ -57,12 +64,14 @@ export function TransactionsScreen() {
     else if (item.kind === "expense") acc.expense += item.amountCents;
     return acc;
   }, { income: 0, expense: 0 });
-  const activeFilters = [category, status, nature, from, to].filter(Boolean).length;
+  const activeFilters = [category, accountId, status, nature, from, to].filter(Boolean).length;
+  const byBank = useMemo(() => movementsByAccount(accounts, filtered), [accounts, filtered]);
   const hasFilters = Boolean(search || activeFilters || kind !== "all");
 
   function clearFilters() {
     setSearch("");
     setCategory("");
+    setAccountId("");
     setStatus("");
     setNature("");
     setFrom("");
@@ -99,11 +108,35 @@ export function TransactionsScreen() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Entradas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-income)]">{formatCurrency(totals.income, currency)}</span></div>
-        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Saídas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-expense)]">{formatCurrency(totals.expense, currency)}</span></div>
+        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Entradas</span><span className="tabular mt-0.5 block text-xl font-semibold text-[var(--color-income)]">{mask(formatCurrency(totals.income, currency))}</span></div>
+        <div className="rounded-[20px] bg-white px-4 py-3 shadow-[var(--shadow-card)]"><span className="text-[var(--color-muted)]">Saídas</span><span className="tabular mt-0.5 block text-xl font-semibold">{mask(formatCurrency(totals.expense, currency))}</span></div>
       </div>
 
-      {groups.length ? (
+      {accounts.length ? <Segmented label="Agrupar" value={view} onChange={setView} options={[{ value: "date", label: "Por data" }, { value: "bank", label: "Por banco" }]} className="w-full sm:w-auto" /> : null}
+
+      {view === "bank" && accounts.length ? (
+        byBank.length ? (
+          <Card className="py-2 sm:py-3">
+            <ul className="divide-y divide-[var(--color-border)]">
+              {byBank.map((row) => (
+                <li key={row.accountId ?? "none"}>
+                  <button type="button" onClick={() => { setAccountId(row.accountId ?? "none"); setView("date"); }} className={`flex min-h-16 w-full items-center gap-3 rounded-2xl py-3 text-left ${focusRing}`}>
+                    <BankLogo bank={row.bank} name={row.name} size={40} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-base font-medium">{row.name}</span>
+                      <span className="block text-sm text-[var(--color-tertiary)]">{row.count} {row.count === 1 ? "lançamento" : "lançamentos"}</span>
+                    </span>
+                    <span className="flex flex-col items-end text-sm">
+                      <span className="tabular font-semibold text-[var(--color-income)]">+{mask(formatCurrency(row.incomeCents, currency))}</span>
+                      <span className="tabular font-semibold">−{mask(formatCurrency(row.expenseCents, currency))}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : <Card className="py-10 text-center text-sm text-[var(--color-tertiary)]">Nenhum lançamento com os filtros atuais.</Card>
+      ) : groups.length ? (
         <Card className="py-2 sm:py-3">
           {groups.map(([date, items]) => (
             <section key={date} aria-label={formatWeekdayDate(date)}>
@@ -145,6 +178,15 @@ export function TransactionsScreen() {
                 {kind === "all" ? <optgroup label="Movimentações internas">{transferCategories.map((item) => <option key={item}>{item}</option>)}</optgroup> : null}
               </select>
             </label>
+            {accounts.length ? (
+              <label className={labelClass}>Banco ou conta
+                <select value={accountId} onChange={(event) => setAccountId(event.target.value)} className={fieldClass}>
+                  <option value="">Todas</option>
+                  {accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
+                  <option value="none">Sem conta</option>
+                </select>
+              </label>
+            ) : null}
             <label className={labelClass}>Status
               <select value={status} onChange={(event) => setStatus(event.target.value as DisplayStatus | "")} className={fieldClass}>
                 <option value="">Todos</option>

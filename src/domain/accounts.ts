@@ -62,11 +62,11 @@ export function accountBalances<A extends AccountLike>(accounts: A[], movements:
   };
 }
 
-/** Entradas e saídas do mês por conta (valores na moeda-base); movimentações sem conta ficam em "Sem conta". */
-export function movementsByAccount(accounts: Pick<AccountLike, "id" | "name" | "bank">[], movements: AccountMovement[], month: string) {
+/** Entradas e saídas por conta (do mês, quando informado) (valores na moeda-base); movimentações sem conta ficam em "Sem conta". */
+export function movementsByAccount(accounts: Pick<AccountLike, "id" | "name" | "bank">[], movements: AccountMovement[], month: string | null = null) {
   const totals = new Map<string | null, { incomeCents: number; expenseCents: number; count: number }>();
   for (const movement of movements) {
-    if (!inMonth(movement.date, month) || movement.kind === "transfer") continue;
+    if ((month && !inMonth(movement.date, month)) || movement.kind === "transfer") continue;
     const key = movement.accountId && accounts.some((account) => account.id === movement.accountId) ? movement.accountId : null;
     const entry = totals.get(key) ?? { incomeCents: 0, expenseCents: 0, count: 0 };
     if (movement.kind === "income") entry.incomeCents += movement.amountCents;
