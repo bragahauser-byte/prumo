@@ -11,6 +11,7 @@ export const illustrations = {
   bills: "Calendário com marcação concluída: contas em dia",
   reports: "Pilha de notas com seta de tendência: perspectiva e previsão",
   journey: "Cofrinho recebendo moedas: o caminho, aporte a aporte, até a meta",
+  investments: "Globo com notas: o dinheiro aplicado em vários lugares, crescendo",
 } as const;
 
 export type IllustrationName = keyof typeof illustrations;

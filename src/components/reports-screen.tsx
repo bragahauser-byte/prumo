@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AlertTriangle, ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
+import { BankBreakdown } from "@/components/accounts/bank-breakdown";
 import { useFinance } from "@/components/finance-provider";
 import { useFinanceSummary } from "@/components/use-finance-summary";
 import { BankLogo } from "@/components/ui/bank-logo";
@@ -123,9 +124,14 @@ export function ReportsScreen() {
         />
       </Card>
 
+      <Card aria-labelledby="bank-balance-title">
+        <SectionHeader id="bank-balance-title" title="Saldo por banco" action={<Link href="/settings/accounts" className={textButton}>{accounts.length ? "Ajustar saldos" : "Adicionar"}</Link>} />
+        <BankBreakdown />
+      </Card>
+
       {accounts.length ? (
         <Card aria-labelledby="banks-title">
-          <SectionHeader id="banks-title" title="Por banco" action={<Link href="/settings/accounts" className={textButton}>Contas</Link>} />
+          <SectionHeader id="banks-title" title="Entradas e saídas por banco" action={<Link href="/settings/accounts" className={textButton}>Contas</Link>} />
           {byBank.length ? (
             <table className="w-full text-sm">
               <thead>

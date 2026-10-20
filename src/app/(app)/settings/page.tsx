@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, BellRing, Camera, ChevronRight, KeyRound, Landmark, LogOut, ShieldCheck, SlidersHorizontal, Wallet } from "lucide-react";
 import { useRef, useState } from "react";
+import { BankBreakdown } from "@/components/accounts/bank-breakdown";
 import { QuickBalanceUpdate } from "@/components/accounts/quick-balance";
 import { useFinance } from "@/components/finance-provider";
 import { NotificationCenter, useNotifications } from "@/components/notifications";
@@ -85,6 +86,14 @@ export default function SettingsPage() {
           <div className="py-3"><dt className="text-xs text-[var(--color-muted)]">Metas</dt><dd className="text-2xl font-semibold">{savingsGoals.length}</dd></div>
           <div className="py-3"><dt className="text-xs text-[var(--color-muted)]">Recorrências</dt><dd className="text-2xl font-semibold">{recurringRules.length}</dd></div>
         </dl>
+      </Card>
+
+      <Card aria-labelledby="my-banks">
+        <div className="mb-3 flex min-h-11 items-center justify-between gap-3">
+          <h2 id="my-banks" className="text-xl font-semibold">Seus bancos</h2>
+          <Link href="/settings/accounts" className={`inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-[var(--color-link)] transition-colors hover:bg-[var(--color-soft)] ${focusRing}`}>{accounts.length ? "Adicionar ou ajustar" : "Adicionar"}</Link>
+        </div>
+        <BankBreakdown />
       </Card>
 
       {message ? <p className={`text-sm ${message.failed ? "text-[var(--color-error)]" : "text-[var(--color-success)]"}`} role={message.failed ? "alert" : "status"}>{message.text}</p> : null}

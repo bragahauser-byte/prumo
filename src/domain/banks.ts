@@ -28,6 +28,36 @@ export function bankName(id: string) {
   return banks.find((bank) => bank.id === id)?.name ?? "Outra instituição";
 }
 
+function plain(value: string) {
+  return value.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/** Reconhece o banco pelo nome digitado (ex.: "nu", "Itau", "banco inter"); sem correspondência, "other". */
+export function bankIdFromName(name: string): BankId {
+  const text = ` ${plain(name)} `;
+  if (!text.trim()) return "other";
+  const aliases: [BankId, string[]][] = [
+    ["nubank", ["nubank", "nu"]],
+    ["itau", ["itau"]],
+    ["banco-do-brasil", ["banco do brasil", "bb"]],
+    ["bradesco", ["bradesco"]],
+    ["caixa", ["caixa", "cef"]],
+    ["santander", ["santander"]],
+    ["inter", ["inter", "banco inter"]],
+    ["mercado-pago", ["mercado pago", "mercadopago"]],
+    ["picpay", ["picpay", "pic pay"]],
+    ["pagbank", ["pagbank", "pagseguro"]],
+    ["sicredi", ["sicredi"]],
+    ["wise", ["wise"]],
+    ["revolut", ["revolut"]],
+    ["paypal", ["paypal"]],
+  ];
+  for (const [id, words] of aliases) {
+    if (words.some((word) => text.includes(` ${word} `))) return id;
+  }
+  return "other";
+}
+
 export function hasBankLogo(id: string) {
   return id !== "other" && banks.some((bank) => bank.id === id);
 }

@@ -102,3 +102,26 @@ export function summarizeInvestments(investments: InvestmentLike[]) {
     distribution,
   };
 }
+
+/**
+ * Carteira agrupada por instituição (nome sem diferença de maiúsculas e acentos), da maior para a menor.
+ * Mesmo critério de valor do resumo: valor atual informado ou, sem ele, o aplicado.
+ */
+export function investmentsByInstitution<T extends InvestmentLike>(investments: T[]) {
+  const key = (name: string) => name.trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const groups = new Map<string, { name: string; appliedCents: number; currentCents: number; items: T[] }>();
+  let total = 0;
+  for (const item of investments) {
+    const current = item.currentCents ?? item.appliedCents;
+    total += current;
+    const id = key(item.institution) || "-";
+    const entry = groups.get(id) ?? { name: item.institution.trim() || "Sem instituição", appliedCents: 0, currentCents: 0, items: [] };
+    entry.appliedCents += item.appliedCents;
+    entry.currentCents += current;
+    entry.items.push(item);
+    groups.set(id, entry);
+  }
+  return [...groups.entries()]
+    .map(([id, entry]) => ({ id, ...entry, count: entry.items.length, share: total > 0 ? entry.currentCents / total : 0 }))
+    .sort((left, right) => right.currentCents - left.currentCents);
+}

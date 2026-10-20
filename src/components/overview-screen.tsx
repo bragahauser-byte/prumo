@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, ChevronRight, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
+import { BankBreakdown } from "@/components/accounts/bank-breakdown";
 import { QuickBalanceUpdate } from "@/components/accounts/quick-balance";
 import { useFinance } from "@/components/finance-provider";
-import { InvestmentDistribution } from "@/components/investments/investments-screen";
 import { usePrivacy } from "@/components/privacy";
 import { TransactionRow } from "@/components/transaction-row";
 import { useFinanceSummary } from "@/components/use-finance-summary";
-import { BankLogo } from "@/components/ui/bank-logo";
 import { Illustration } from "@/components/ui/illustration";
 import { Card, SectionHeader, TileLink, focusRing, textButton } from "@/components/ui/primitives";
 import { summarizeInvestments } from "@/domain/investments";
@@ -40,6 +39,7 @@ export function OverviewScreen() {
   const money = (cents: number) => mask(formatCurrency(cents, currency));
   const [editingBalance, setEditingBalance] = useState(false);
   const investmentSummary = summarizeInvestments(investments);
+  const investmentPlaces = new Set(investments.map((item) => item.institution.trim().toLocaleLowerCase("pt-BR"))).size;
   const previousLabel = formatMonthKey(shiftMonth(month, -1)).split(" ")[0];
   const weekAhead = addDays(today, 7);
   const upcoming = expenses
@@ -78,18 +78,13 @@ export function OverviewScreen() {
                   ? `Informado em ${formatShortDate(preferences.balanceReportedOn)} e ajustado pelo que foi pago ou recebido desde então.`
                   : "Valor informado por você; não consultamos o banco."}
           </p>
-          {accountsWithBalance.length ? (
-            <ul className="mt-4 space-y-2">
-              {accountsWithBalance.map(({ account, balanceCents: value, convertedCents }) => (
-                <li key={account.id} className="flex items-center gap-3 text-sm">
-                  <BankLogo bank={account.bank} name={account.name} size={28} />
-                  <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">{account.name}</span>
-                  <span className="tabular shrink-0 font-medium">{mask(formatCurrency(value ?? 0, account.currency))}</span>
-                  {account.currency !== currency ? <span className="tabular hidden shrink-0 text-xs text-[var(--color-tertiary)] sm:inline">{convertedCents === null ? "sem cotação" : `≈ ${money(convertedCents)}`}</span> : null}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <h3 className="text-xs font-semibold text-[var(--color-tertiary)]">De onde vem seu dinheiro</h3>
+              {accountsWithBalance.length ? <Link href="/settings/accounts" className="text-xs font-semibold text-[var(--color-link)] underline-offset-4 hover:underline">Bancos</Link> : null}
+            </div>
+            <BankBreakdown compact />
+          </div>
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Link href="/add?kind=income" className={softLink}>
               <ArrowDownLeft size={18} className="text-[var(--color-success)]" aria-hidden="true" /> Receita
@@ -141,32 +136,7 @@ export function OverviewScreen() {
         </div>
       </Card>
 
-      <Card aria-labelledby="investments-title">
-        <div className="flex items-center justify-between gap-3">
-          <h2 id="investments-title" className="text-base font-semibold">Investimentos</h2>
-          <Link href="/investments" className={textButton}>Ver tudo <ChevronRight size={16} aria-hidden="true" /></Link>
-        </div>
-        {investmentSummary.count ? (
-          <div className="mt-3 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-8">
-            <div>
-              <p className="text-sm text-[var(--color-tertiary)]">Total aplicado</p>
-              <p className="tabular mt-0.5 text-3xl font-semibold">{money(investmentSummary.appliedCents)}</p>
-              {investmentSummary.withCurrentValue ? <p className="tabular mt-0.5 text-sm text-[var(--color-tertiary)]">Valor atual informado {money(investmentSummary.currentCents)}</p> : null}
-            </div>
-            <InvestmentDistribution investments={investments} compact />
-          </div>
-        ) : (
-          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <p className="flex-1 text-sm text-[var(--color-tertiary)]">Registre suas aplicações para ver o total e a distribuição por tipo.</p>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/investments" className={`inline-flex min-h-11 items-center rounded-full bg-[var(--color-soft)] px-4 text-sm font-semibold transition-colors hover:bg-[var(--color-border)] ${focusRing}`}>Cadastrar aplicação</Link>
-              <Link href="/investments/learn" className={textButton}>Conhecer os tipos</Link>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <TileLink href="/budgets" title="Orçamentos">
           <Illustration name="budgets" size={88} className="-ml-1 mt-3" />
           <span className={`mt-4 text-xl font-semibold ${budgetsAtRisk ? "text-[var(--color-warning)]" : ""}`}>{budgets.length ? budgetsAtRisk ? `${budgetsAtRisk} em alerta` : "Tudo em dia" : "Sem limites"}</span>
@@ -177,10 +147,19 @@ export function OverviewScreen() {
           <span className="mt-4 truncate text-xl font-semibold">{nextBill ? formatShortDate(nextBill.date) : "Em dia"}</span>
           <span className="mt-0.5 truncate text-sm text-[var(--color-tertiary)]">{nextBill ? `${nextBill.description} · ${money(nextBill.amountCents)}` : "Nenhuma conta a pagar"}</span>
         </TileLink>
-        <TileLink href="/reports" title="Relatórios" className="col-span-2 lg:col-span-1">
+        <TileLink href="/reports" title="Relatórios">
           <Illustration name="reports" size={88} className="-ml-1 mt-3" />
-          <span className="tabular mt-4 text-xl font-semibold">{projectionCents === null ? "—" : money(projectionCents)}</span>
+          <span className="tabular mt-4 truncate text-xl font-semibold">{projectionCents === null ? "—" : money(projectionCents)}</span>
           <span className="mt-0.5 text-sm text-[var(--color-tertiary)]">sobra estimada no fim do mês</span>
+        </TileLink>
+        <TileLink href="/investments" title="Investimentos">
+          <Illustration name="investments" size={88} className="-ml-1 mt-3" />
+          <span className="tabular mt-4 truncate text-xl font-semibold">{investmentSummary.count ? money(investmentSummary.currentCents) : "Comece já"}</span>
+          <span className="mt-0.5 truncate text-sm text-[var(--color-tertiary)]">
+            {investmentSummary.count
+              ? `em ${investmentPlaces} ${investmentPlaces === 1 ? "instituição" : "instituições"}`
+              : "Cadastre onde você investe"}
+          </span>
         </TileLink>
       </div>
 
