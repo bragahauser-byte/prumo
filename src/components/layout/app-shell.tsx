@@ -10,15 +10,15 @@ import {
   EyeOff,
   House,
   Landmark,
-  List,
+  PiggyBank,
   Plus,
+  ReceiptText,
   Settings,
-  Sparkles,
-  Target,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { AiMark } from "@/components/assistant/ai-mark";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { AssistantProvider, useAssistant } from "@/components/assistant/assistant-context";
 import { BrandLogo, LoadingScreen } from "@/components/brand";
@@ -35,8 +35,8 @@ type NavigationItem = { href: string; label: string; title?: string; subtitle: s
 
 const navigation: NavigationItem[] = [
   { href: "/overview", label: "Início", subtitle: "Seu mês em dia", icon: House, mobile: true },
-  { href: "/transactions", label: "Extrato", subtitle: "Entradas e saídas", icon: List, mobile: true },
-  { href: "/goals", label: "Metas", subtitle: "Seus objetivos", icon: Target, mobile: true },
+  { href: "/transactions", label: "Extrato", subtitle: "Entradas e saídas", icon: ReceiptText, mobile: true },
+  { href: "/goals", label: "Metas", subtitle: "Seus objetivos", icon: PiggyBank, mobile: true },
   { href: "/reports", label: "Relatórios", subtitle: "Como foi o mês", icon: ChartColumn, mobile: true },
   { href: "/investments", label: "Investimentos", subtitle: "Suas aplicações", icon: Landmark },
   { href: "/bills", label: "Agenda", subtitle: "Contas do mês", icon: CalendarClock },
@@ -118,9 +118,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {pageSubtitle ? <p className="truncate text-2xl font-normal leading-[30px] tracking-[-0.01em] text-[var(--color-tertiary)]">{pageSubtitle}</p> : null}
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Link href="/add" aria-label="Novo registro" className={`flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-soft)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-border)] lg:hidden ${focusRing}`}>
-                  <Plus size={20} aria-hidden="true" />
-                </Link>
                 <PrivacyToggle />
                 <Link href="/settings" aria-label="Perfil e ajustes" className={`rounded-full ${focusRing}`}>
                   <ProfileAvatar name={preferences?.displayName} photo={preferences?.avatarDataUrl} />
@@ -182,8 +179,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
       <Link href="/add" className={`mb-3 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-5 text-base font-semibold text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-pressed)] ${focusRing}`}>
         <Plus size={20} aria-hidden="true" /> Novo registro
       </Link>
-      <button type="button" onClick={() => openAssistant()} className={`mb-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-highlight-soft)] px-5 text-base font-semibold text-[var(--color-highlight-pressed)] transition-colors hover:bg-[#fbdcc4] ${focusRing}`}>
-        <Sparkles size={18} aria-hidden="true" /> Assistente
+      <button type="button" onClick={() => openAssistant()} className={`mb-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-soft)] px-5 text-base font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-border)] ${focusRing}`}>
+        <AiMark size={18} animated /> Assistente
       </button>
       <nav aria-label="Navegação principal" className="space-y-1">
         {navigation.map(({ href, label, icon: Icon }) => {
@@ -207,8 +204,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
 }
 
 /**
- * Barra inferior: pílula flutuante com quatro ícones e, separado, o botão circular do assistente.
- * Some enquanto o teclado está aberto para não cobrir o campo em edição.
+ * Barra de abas (Figma "Tab Bar"): pílula de vidro com quatro abas de ícone + rótulo e, à direita,
+ * o botão circular da IA com borda em gradiente animado. Some enquanto o teclado está aberto.
  */
 function MobileNavigation({ pathname }: { pathname: string }) {
   const keyboardOpen = useKeyboardOpen();
@@ -219,8 +216,8 @@ function MobileNavigation({ pathname }: { pathname: string }) {
     <>
       {/* Véu com desfoque: o conteúdo some suavemente ao passar por baixo da barra. */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-[calc(120px+env(safe-area-inset-bottom))] bg-gradient-to-t from-white via-white/80 to-white/0 backdrop-blur-[4px] [mask-image:linear-gradient(to_top,black_50%,transparent)] lg:hidden" />
-      <div className="fixed inset-x-4 bottom-[max(20px,calc(env(safe-area-inset-bottom)+8px))] z-30 mx-auto flex max-w-[440px] items-center justify-between gap-3 lg:hidden">
-        <nav aria-label="Navegação principal" className="flex h-16 items-center gap-1 rounded-full border border-black/[0.04] bg-[var(--color-nav-glass)] px-2 shadow-[0_6px_24px_rgba(14,15,12,0.10)] backdrop-blur-xl">
+      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-[480px] items-center justify-end gap-4 px-[25px] pb-[max(25px,env(safe-area-inset-bottom))] pt-4 lg:hidden">
+        <nav aria-label="Navegação principal" className="flex h-[54px] min-w-0 flex-1 items-center rounded-full bg-[var(--color-nav-glass)]/90 px-0.5 shadow-[var(--shadow-nav)] backdrop-blur-xl">
           {mobileNavigation.map((item) => {
             const active = isActiveRoute(pathname, item.href);
             const Icon = item.icon;
@@ -228,11 +225,12 @@ function MobileNavigation({ pathname }: { pathname: string }) {
               <Link
                 key={item.href}
                 href={item.href}
-                aria-label={item.label}
                 aria-current={active ? "page" : undefined}
-                className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-highlight)] ${active ? "bg-[var(--color-nav-selection)] text-[var(--color-highlight)]" : "text-[var(--color-nav-icon)] hover:text-[var(--color-muted)]"}`}
+                className={`relative isolate flex h-[54px] min-w-0 flex-1 flex-col items-center justify-center gap-px px-2 pb-[7px] pt-1.5 transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--color-nav-active)] rounded-full ${active ? "text-[var(--color-nav-active)]" : "text-[var(--color-nav-icon)]"}`}
               >
-                <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
+                {active ? <span aria-hidden="true" className="absolute inset-y-0 -left-0.5 -right-0.5 -z-10 rounded-full bg-[var(--color-nav-selection)] mix-blend-multiply" /> : null}
+                <span className="flex h-7 items-center"><Icon size={20} strokeWidth={active ? 2.25 : 2} aria-hidden="true" /></span>
+                <span className="w-full truncate text-center text-[10px] font-semibold leading-3 tracking-[-0.1px]">{item.label}</span>
               </Link>
             );
           })}
@@ -241,9 +239,9 @@ function MobileNavigation({ pathname }: { pathname: string }) {
           type="button"
           onClick={() => openAssistant()}
           aria-label="Abrir assistente"
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--color-highlight)] text-[var(--color-on-highlight)] shadow-[0_8px_24px_rgba(242,107,29,0.35)] transition-transform duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-highlight)]"
+          className="ai-ring relative flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full shadow-[var(--shadow-nav)] transition-transform duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-nav-active)]"
         >
-          <Sparkles size={26} strokeWidth={1.75} fill="currentColor" aria-hidden="true" />
+          <AiMark size={28} animated />
         </button>
       </div>
     </>

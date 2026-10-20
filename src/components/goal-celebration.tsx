@@ -22,7 +22,7 @@ function noise(seed: number) {
 }
 
 /** Estilhaços que explodem do troféu em todas as direções. */
-const burstColors = ["#9FE870", "#FFEB69", "#FFC091", "#FFD7EF", "#A0E1E1", "#FFFFFF"];
+const burstColors = ["#9FE870", "#FFEB69", "#00A88F", "#FFD7EF", "#A0E1E1", "#FFFFFF"];
 const burst = Array.from({ length: 30 }, (_, index) => {
   const angle = (index / 30) * Math.PI * 2 + noise(index) * 0.3;
   const distance = 130 + noise(index + 40) * 90;

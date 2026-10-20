@@ -1,4 +1,4 @@
-const colors = ["#9FE870", "#163300", "#FFC091", "#FFEB69", "#A0E1E1", "#FFD7EF", "#2F5711"];
+const colors = ["#9FE870", "#163300", "#00A88F", "#FFEB69", "#A0E1E1", "#FFD7EF", "#2F5711"];
 
 /** Pseudoaleatório determinístico para o confete ter a mesma forma em toda renderização. */
 function noise(seed: number) {

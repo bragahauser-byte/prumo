@@ -22,7 +22,7 @@ const categoryColors: Record<string, string> = {
   Moradia: "#163300",
   Alimentação: "#9FE870",
   Transporte: "#A0E1E1",
-  Saúde: "#FFC091",
+  Saúde: "#00A88F",
   Contas: "#260A2F",
   Assinaturas: "#FFD7EF",
   Lazer: "#FFEB69",

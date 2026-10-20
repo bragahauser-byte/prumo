@@ -16,7 +16,7 @@ import { formatCurrency, formatShortDate } from "@/lib/formatting";
  * Cores que separam as metas no anel dividido: alternam tons escuros e claros da paleta
  * (verde floresta, verde vivo e as secundárias) para que fatias vizinhas nunca se confundam.
  */
-export const goalShades = ["#163300", "#9FE870", "#260A2F", "#FFC091", "#3A341C", "#A0E1E1", "#320707", "#FFD7EF"];
+export const goalShades = ["#163300", "#9FE870", "#260A2F", "#00A88F", "#3A341C", "#A0E1E1", "#320707", "#FFD7EF"];
 
 export const paceLabels: Record<GoalPaceStatus, { label: string; className: string }> = {
   complete: { label: "Meta alcançada", className: "bg-[var(--color-success-soft)] text-[var(--color-success)]" },

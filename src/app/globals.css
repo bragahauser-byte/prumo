@@ -11,7 +11,6 @@
   --color-forest-green: #163300;
 
   /* Cores secundárias (categorias, gráficos e estados) */
-  --color-bright-orange: #ffc091;
   --color-bright-yellow: #ffeb69;
   --color-bright-blue: #a0e1e1;
   --color-bright-pink: #ffd7ef;
@@ -21,12 +20,23 @@
   --color-dark-maroon: #320707;
 
   /*
-   * Destaque da marca (laranja): navegação ativa e assistente. Nunca sinaliza gasto.
+   * Destaque da marca (verde floresta): navegação ativa, selos e atalhos. Nunca sinaliza gasto.
    */
-  --color-highlight: #f26b1d;
-  --color-highlight-pressed: #d95a10;
-  --color-highlight-soft: #fdeadb;
+  --color-highlight: #163300;
+  --color-highlight-pressed: #0e2200;
+  --color-highlight-soft: #e2f6d5;
   --color-on-highlight: #ffffff;
+
+  /*
+   * Identidade da IA ("Forest Intelligence"): o verde original com verde-azulado para dar profundidade.
+   * Usada só no assistente (botão da barra, brilhos do chat, ícone e envio).
+   */
+  --color-ai-forest: #163300;
+  --color-ai-lime: #9fe870;
+  --color-ai-teal: #00a88f;
+  --color-ai-deep: #003e3a;
+  --color-ai-night: #050906;
+  --gradient-ai: linear-gradient(135deg, #9fe870 0%, #00a88f 45%, #003e3a 75%, #163300 100%);
 
   /* Conteúdo: hierarquia em tons de cinza */
   --color-text: #0e0f0c;           /* content primary */
@@ -58,10 +68,12 @@
   --color-border-overlay: #c9ccc6; /* border overlay */
   --shadow-card: 0 1px 2px rgba(14, 15, 12, 0.04), 0 6px 24px rgba(14, 15, 12, 0.05);
 
-  /* Navegação */
-  --color-nav-glass: rgba(250, 250, 248, 0.92);
-  --color-nav-selection: var(--color-highlight-soft);
-  --color-nav-icon: var(--color-quaternary);
+  /* Navegação (barra de abas em vidro) */
+  --color-nav-glass: #f7f7f7;
+  --color-nav-selection: #ededed;
+  --color-nav-icon: #1a1a1a;
+  --color-nav-active: var(--color-forest-green);
+  --shadow-nav: 0 8px 40px rgba(0, 0, 0, 0.12);
 
   /* Sentimento */
   --color-success: #2f5711;
@@ -273,6 +285,83 @@
 
 .animate-amount-shake {
   animation: amount-shake 200ms ease-in-out 2;
+}
+
+/*
+ * Identidade da IA em movimento.
+ * Botão da barra: borda em gradiente cônico que gira devagar e ícone com o mesmo gradiente deslizando.
+ */
+@property --ai-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ai-spin {
+  to { --ai-angle: 360deg; }
+}
+
+@keyframes ai-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.ai-ring {
+  background:
+    linear-gradient(var(--color-nav-glass), var(--color-nav-glass)) padding-box,
+    conic-gradient(from var(--ai-angle), #163300, #9fe870, #00a88f, #003e3a, #050906, #163300) border-box;
+  border: 2px solid transparent;
+  animation: ai-spin 6s linear infinite;
+}
+
+.ai-gradient-fill {
+  background: linear-gradient(120deg, #163300, #00a88f, #9fe870, #003e3a, #163300);
+  background-size: 300% 300%;
+  animation: ai-shift 7s ease-in-out infinite;
+}
+
+/* Chat: dois brilhos bem sutis nos cantos que flutuam devagar e somem quando a conversa começa. */
+@keyframes ai-orb-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(24px, 18px, 0) scale(1.08); }
+}
+
+@keyframes ai-orb-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.04); }
+  50% { transform: translate3d(-22px, -16px, 0) scale(0.96); }
+}
+
+.ai-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.ai-orb-a {
+  background: radial-gradient(circle at 40% 40%, rgba(159, 232, 112, 0.55), rgba(0, 168, 143, 0.28) 55%, transparent 72%);
+  animation: ai-orb-a 14s ease-in-out infinite;
+}
+
+.ai-orb-b {
+  background: radial-gradient(circle at 60% 60%, rgba(0, 168, 143, 0.4), rgba(0, 62, 58, 0.2) 55%, transparent 72%);
+  animation: ai-orb-b 16s ease-in-out infinite;
+}
+
+@keyframes ai-veil {
+  0%, 100% { opacity: 0.9; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(-3%); }
+}
+
+/* Faixa de luz desfocada no topo do chat: permanece durante toda a conversa. */
+.ai-veil {
+  background:
+    radial-gradient(60% 100% at 20% 0%, rgba(159, 232, 112, 0.22), transparent 70%),
+    radial-gradient(50% 90% at 70% 0%, rgba(0, 168, 143, 0.16), transparent 70%),
+    radial-gradient(40% 80% at 95% 0%, rgba(0, 62, 58, 0.1), transparent 70%);
+  filter: blur(18px);
+  animation: ai-veil 12s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
