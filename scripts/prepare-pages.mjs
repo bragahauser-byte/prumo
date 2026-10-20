@@ -15,8 +15,6 @@ const serverOnly = [
   "src/app/auth",
   "src/app/(app)/actions.ts",
   "src/app/(app)/settings/password",
-  // Assistente de IA: precisa de servidor (proxy para a API da Anthropic). No Pages, o chat mostra um aviso.
-  "src/app/api",
 ];
 
 for (const path of serverOnly) {

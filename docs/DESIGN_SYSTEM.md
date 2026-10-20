@@ -4,7 +4,7 @@
 
 Interface branca e minimalista, em português brasileiro. Fundo branco; cards brancos com sombra quase imperceptível (`--shadow-card`) e raio de 20 px; seções organizadas por espaçamento, tipografia e divisores — sem grandes áreas cinza. O neutro (`--color-soft`) só aparece em controles (campos de busca, botões suaves, chips). Ações principais usam cápsula verde viva com texto verde floresta (`inkButton`/`primaryButton`).
 
-No desktop, a navegação lateral é estável; no celular, uma barra flutuante translúcida traz Início, Extrato, o botão central de adicionar, Metas e Relatórios, a **40 px da borda inferior**.
+No desktop, a navegação lateral é estável; no celular, a barra de abas (Figma "Tab Bar") é uma pílula de vidro `#F7F7F7` com sombra `0 8px 40px rgba(0,0,0,.12)` e quatro abas de ícone + rótulo (Início, Extrato, Metas com porquinho, Relatórios); a aba ativa ganha a seleção `#EDEDED` e o verde floresta. À direita fica o botão circular da IA (62 px), com borda em gradiente cônico que gira devagar e a estrela no gradiente da IA.
 
 **Cabeçalho das telas:** título e subtítulo no mesmo tamanho (24 px), diferenciados só por peso e cor — título em `--color-text` semibold, subtítulo em `--color-tertiary` regular. No celular começa a **64 px do topo**. À direita, o sino de notificações (com contador de novos alertas e lembretes) e a foto de perfil.
 
@@ -24,7 +24,7 @@ No desktop, a navegação lateral é estável; no celular, uma barra flutuante t
 | Fundações | `--color-base-contrast` / `--color-base-light` / `--color-base-dark` | `#FFFFFF` / `#21231D` / `#0E0F0C` | superfícies de máximo contraste, fundos escuros, texto de ancoragem |
 | Principais | `--color-bright-green` | `#9FE870` | crescimento, metas alcançadas, ações de destaque, teclado de valor |
 | | `--color-forest-green` | `#163300` | solidez: texto sobre verde vivo, controles, links, progresso |
-| Secundárias | `--color-bright-orange` / `-yellow` / `-blue` / `-pink` | `#FFC091` / `#FFEB69` / `#A0E1E1` / `#FFD7EF` | categorias, metas no anel, confete |
+| Secundárias | `--color-bright-yellow` / `-blue` / `-pink` (+ `--color-ai-teal`) | `#FFEB69` / `#A0E1E1` / `#FFD7EF` (+ `#00A88F`) | categorias, metas no anel, confete |
 | Tons escuros | `--color-dark-purple` / `-gold` / `-charcoal` / `-maroon` | `#260A2F` / `#3A341C` / `#21231D` / `#320707` | fatias escuras do anel de metas, profundidade |
 | Conteúdo | `--color-text` / `--color-muted` / `--color-tertiary` / `--color-link` | `#0E0F0C` / `#454745` / `#6A6C6A` / `#163300` | títulos, descrições, auxiliares e datas, links |
 | Interação | `--color-action` / `--color-accent` / `--color-secondary` / `--color-on-accent` | `#163300` / `#9FE870` / `#868685` / `#163300` | primária, CTA e foco ativo, secundária, controle sobre o CTA |
@@ -32,9 +32,11 @@ No desktop, a navegação lateral é estável; no celular, uma barra flutuante t
 | Bordas | `--color-border` / `--color-border-overlay` | `#E5E7E3` / `#C9CCC6` | divisores, bordas de controles e campos ativos |
 | Sentimento | `--color-success` / `--color-warning` (+ `-fill`) / `--color-error` | `#2F5711` / `#8A6100` (`#EDC843`) / `#A8200D` | sucesso e metas batidas, atenção, erro e saldo negativo; cada um com `-soft` para fundos |
 
-**Destaque da marca:** `--color-highlight` (`#F26B1D`, laranja), com `-pressed`, `-soft` e `--color-on-highlight`. Usado só no item ativo da barra de navegação e no assistente de IA; nunca para sinalizar gasto.
+**Destaque da marca:** `--color-highlight` aponta para o verde floresta (`#163300`), com `-pressed`, `-soft` e `--color-on-highlight`. O app não usa laranja.
 
-**Entradas e saídas:** `--color-income` (`#2F5711`) para o que entra; `--color-expense` aponta para a cor do texto: valores gastos não usam vermelho (gera ansiedade) nem o laranja de destaque. Gráficos: despesas em cinza escuro e receitas em verde vivo. Atraso e limite ultrapassado usam âmbar (`--color-over`); o vermelho (`--color-error`) fica para erros do sistema e ações destrutivas. Metas no anel usam `goalShades`, alternando tons escuros e claros para que fatias vizinhas nunca se confundam; cada fatia tem legenda com nome e porcentagem.
+**Identidade da IA ("Forest Intelligence"):** `--color-ai-forest` `#163300`, `--color-ai-lime` `#9FE870`, `--color-ai-teal` `#00A88F`, `--color-ai-deep` `#003E3A`, `--color-ai-night` `#050906`. No chat: véu desfocado bem sutil no topo (sempre) e dois brilhos nos cantos superior esquerdo e inferior direito que flutuam devagar e somem quando a conversa começa; a estrela, os marcadores de lista e o botão de enviar mantêm o gradiente.
+
+**Entradas e saídas:** `--color-income` (`#2F5711`) para o que entra; `--color-expense` aponta para a cor do texto: valores gastos não usam vermelho (gera ansiedade) nem cores de alerta. Gráficos: despesas em cinza escuro e receitas em verde vivo. Atraso e limite ultrapassado usam âmbar (`--color-over`); o vermelho (`--color-error`) fica para erros do sistema e ações destrutivas. Metas no anel usam `goalShades`, alternando tons escuros e claros para que fatias vizinhas nunca se confundam; cada fatia tem legenda com nome e porcentagem.
 
 ## Tipografia
 

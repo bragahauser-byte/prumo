@@ -1,6 +1,6 @@
 /**
  * Executa as ferramentas do assistente no navegador. Cada execução devolve só o resultado da
- * consulta (JSON para o modelo) e, quando faz sentido, um cartão com os números para a tela.
+ * consulta (JSON com os valores já formatados, que o motor transforma em texto) e, quando faz sentido, um cartão com os números para a tela.
  */
 import { accountBalances } from "@/domain/accounts";
 import {

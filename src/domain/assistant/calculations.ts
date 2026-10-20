@@ -1,6 +1,6 @@
 /**
- * Cálculos determinísticos usados pelas ferramentas do assistente. O modelo nunca soma, compara
- * ou projeta valores de cabeça: ele pede a uma destas funções e explica o resultado.
+ * Cálculos determinísticos usados pelas ferramentas do assistente: toda soma, comparação
+ * e projeção sai destas funções, e o assistente só explica o resultado.
  * Todos os valores estão em centésimos da moeda-base.
  */
 import { lastDayOfMonth, shiftMonth, signedAmount, type Movement } from "../planning";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FinanceSnapshot } from "@/lib/finance/repository";
 import { runAssistantTool, type ToolContext } from "./run-tool";
-import { splitSuggestions } from "./use-assistant-chat";
+import { emptyMemory, respond } from "./engine";
 
 const snapshot: FinanceSnapshot = {
   preferences: null,
@@ -57,10 +57,54 @@ describe("runAssistantTool", () => {
   });
 });
 
-describe("splitSuggestions", () => {
-  it("separates quick replies from the text, also while streaming", () => {
-    expect(splitSuggestions("Tudo certo.\n<sugestoes>A|B|C</sugestoes>")).toEqual({ text: "Tudo certo.", suggestions: ["A", "B", "C"] });
-    expect(splitSuggestions("Parcial <sug").text).toBe("Parcial");
-    expect(splitSuggestions("Sem sugestões").suggestions).toEqual([]);
+describe("respond (assistente local)", () => {
+  const text = (reply: ReturnType<typeof respond>) => reply.blocks.filter((block) => block.type === "text").map((block) => (block as { text: string }).text).join(" ").replace(/ /g, " ");
+
+  it("answers spending questions with the computed total and a card", () => {
+    const reply = respond("quanto gastei este mês?", emptyMemory, context);
+    expect(text(reply)).toContain("R$ 2.000,00");
+    expect(reply.blocks.some((block) => block.type === "card")).toBe(true);
+  });
+
+  it("proposes an expense with the matched account, without saving", () => {
+    const reply = respond("gastei 50 no mercado pelo nubank", emptyMemory, context);
+    const proposal = reply.blocks.find((block) => block.type === "proposal");
+    expect(proposal).toMatchObject({ proposal: { kind: "add_expense", amountCents: 5000, category: "Alimentação", accountId: "nu" } });
+  });
+
+  it("asks for a missing amount and completes the request with the answer", () => {
+    const first = respond("registrar gasto na farmácia", emptyMemory, context);
+    expect(first.memory.pending).toMatchObject({ intent: "add_expense", missing: "amount" });
+    const second = respond("32,50", first.memory, context);
+    expect(second.blocks.find((block) => block.type === "proposal")).toMatchObject({ proposal: { amountCents: 3250, category: "Saúde" } });
+    expect(second.memory.pending).toBeNull();
+  });
+
+  it("understands follow-ups about another period", () => {
+    const first = respond("quanto gastei no mês passado?", emptyMemory, context);
+    expect(text(first)).toContain("Não encontrei");
+    const second = respond("e neste mês?", first.memory, context);
+    expect(text(second)).toContain("R$ 2.000,00");
+  });
+
+  it("shows balances per bank", () => {
+    const reply = respond("quanto tenho em cada banco?", emptyMemory, context);
+    expect(reply.blocks.find((block) => block.type === "card")).toMatchObject({ card: { kind: "accounts" } });
+  });
+
+  it("offers an app card when it does not understand a request about a screen", () => {
+    const reply = respond("onde vejo meus orçamentos", emptyMemory, context);
+    expect(reply.blocks.find((block) => block.type === "card")).toMatchObject({ card: { kind: "feature", feature: "budgets" } });
+  });
+});
+
+describe("respond: investimentos", () => {
+  it("accepts a broker outside the bank list, also as a follow-up answer", () => {
+    const direct = respond("apliquei 1500 em ações na xp", emptyMemory, context);
+    expect(direct.blocks.find((block) => block.type === "proposal")).toMatchObject({ proposal: { kind: "add_investment", institution: "XP", appliedCents: 150000 } });
+    const first = respond("investi 2000 em cdb", emptyMemory, { ...context, snapshot: { ...snapshot, accounts: [] } });
+    expect(first.memory.pending?.missing).toBe("account");
+    const second = respond("BTG Pactual", first.memory, { ...context, snapshot: { ...snapshot, accounts: [] } });
+    expect(second.blocks.find((block) => block.type === "proposal")).toMatchObject({ proposal: { institution: "BTG Pactual", type: "cdb_rdb" } });
   });
 });
